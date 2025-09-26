@@ -127,11 +127,19 @@ def main():
     
     # Check if port is specified as second argument
     if len(sys.argv) == 3:
-        port = int(sys.argv[2])
+        try:
+            port = int(sys.argv[2])
+        except ValueError:
+            print(f"Error: Invalid port '{sys.argv[2]}'", file=sys.stderr)
+            sys.exit(1)
     # Check if port is specified in host (host:port format)
     elif ':' in host:
-        host, port = host.split(':', 1)
-        port = int(port)
+        host, port_str = host.split(':', 1)
+        try:
+            port = int(port_str)
+        except ValueError:
+            print(f"Error: Invalid port '{port_str}'", file=sys.stderr)
+            sys.exit(1)
     
     scan_kafka_security(host, port)
 

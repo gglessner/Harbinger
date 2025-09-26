@@ -302,7 +302,7 @@ class HarbingerMonitor:
                     
                     # Execute post_command if configured
                     if post_command:
-                        command_output = self.execute_post_command(post_command, host)
+                        command_output = self.execute_post_command(post_command, host, port)
                         if command_output:
                             formatted_content.append(f"{command_output}\n")
                         formatted_content.append("\n")  # Add blank line after command output
@@ -422,14 +422,14 @@ Report saved: {datetime.now().isoformat()}
                     return section_data.get('post_command', '')
         return ''
     
-    def execute_post_command(self, command_template, host):
+    def execute_post_command(self, command_template, host, port=None):
         """Execute post_command for a specific host"""
         if not command_template:
             return ''
         
         try:
-            # Replace {host} placeholder with actual host IP
-            command = command_template.format(host=host)
+            # Replace {host} and {port} placeholders with actual values
+            command = command_template.format(host=host, port=port or '')
             
             result = subprocess.run(
                 command, 
