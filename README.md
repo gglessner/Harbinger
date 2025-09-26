@@ -74,7 +74,6 @@ email:
   username: "your-email@gmail.com"
   password: "your-app-password"
   from_address: "your-email@gmail.com"
-  send_no_hosts_report: false
 ```
 
 ### Report Configuration

@@ -1,0 +1,16 @@
+# Harbinger - Network Host Monitoring Tool
+# Python Requirements
+# Author: Garland Glessner <gglessner@gmail.com>
+# License: GNU GPL
+
+# Core dependencies
+PyYAML>=6.0
+schedule>=1.2.0
+
+# Optional dependencies for post-command scripts
+confluent-kafka>=2.0.0  # For kafka.py post-command script
+
+# Optional dependencies for enhanced functionality
+# (These are system-level tools, not Python packages)
+# - nmap (for network scanning)
+# - SQLite3 (included with Python)

@@ -10,7 +10,6 @@ email:
   username: "test@example.com"
   password: "test-password"
   from_address: "test@example.com"
-  send_no_hosts_report: false  # Set to true to receive reports even when no new hosts are found
 
 # Logging Configuration
 logging:
@@ -61,7 +60,15 @@ port_rdp:
   command: "nmap -p {port} --open 10.0.0.0/24"
   post_command: "nmap -sV -p 3389 {host}"  # Optional: run command for each detected host
 
-# Example 5: Custom script (works on both Windows and Linux)
+# Example 5: Kafka security scanner
+port_kafka:
+  port: 9092
+  label: "Kafka"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "python post_command/kafka.py {host}"
+
+# Example 6: Custom script (works on both Windows and Linux)
 port_custom:
   port: 8080
   label: "Custom Service"
