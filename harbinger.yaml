@@ -31,7 +31,8 @@ standalone:
 # Example 1: Using nmap_scan with flexible arguments
 port_ssh:
   port: 22
-  label: "SSH"
+  label: "Network Security"
+  port_label: "SSH"
   email: "security@company.com"
   nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
   post_command: "nmap -sV -p 22 {host}"  # Optional: run command for each detected host
@@ -39,7 +40,8 @@ port_ssh:
 # Example 2: Using custom command (OS agnostic)
 port_web:
   port: 80
-  label: "HTTP"
+  label: "Network Security"
+  port_label: "HTTP"
   email: "security@company.com"
   command: "nmap -p {port} --open 10.0.0.0/24"
   post_command: "curl -I http://{host}"  # Optional: run command for each detected host
@@ -47,7 +49,8 @@ port_web:
 # Example 3: Another nmap scan with different options
 port_https:
   port: 443
-  label: "HTTPS"
+  label: "Network Security"
+  port_label: "HTTPS"
   email: "security@company.com"
   nmap_scan: "nmap -p {port} --open --max-retries 2 10.0.0.0/24"
   # No post_command - will show simple format
@@ -55,7 +58,8 @@ port_https:
 # Example 4: Custom script or command
 port_rdp:
   port: 3389
-  label: "RDP"
+  label: "Admin Services"
+  port_label: "RDP"
   email: "admin@company.com"
   command: "nmap -p {port} --open 10.0.0.0/24"
   post_command: "nmap -sV -p 3389 {host}"  # Optional: run command for each detected host
@@ -63,7 +67,8 @@ port_rdp:
 # Example 5: Kafka security scanner
 port_kafka:
   port: 9092
-  label: "Kafka"
+  label: "Data Services"
+  port_label: "Kafka"
   email: "security@company.com"
   nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
   post_command: "python post_command/kafka.py {host}"
@@ -71,6 +76,16 @@ port_kafka:
 # Example 6: Custom script (works on both Windows and Linux)
 port_custom:
   port: 8080
-  label: "Custom Service"
+  label: "Development"
+  port_label: "Custom Service"
   email: "devops@company.com"
   command: "python custom_scanner.py --subnet 10.0.0.0/24 --port {port}"
+
+# Example 7: Report-only monitoring (no email sent)
+port_dns:
+  port: 53
+  label: "Internal Monitoring"
+  port_label: "DNS"
+  # No email field = report-only mode
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "nslookup {host}"

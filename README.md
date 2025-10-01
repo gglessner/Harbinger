@@ -11,12 +11,14 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
 ## Features
 
 - **Multi-port monitoring**: Monitor multiple TCP ports simultaneously
+- **Label-based grouping**: Group ports by custom labels for organized reporting
 - **Flexible scanning**: Support for custom shell commands or nmap scans
 - **Email reporting**: Automatic email notifications for new host discoveries
+- **Report-only mode**: Generate local reports without sending emails
 - **Database tracking**: SQLite3 database with separate tables per port
 - **Dual operation modes**: Cron mode for scheduled runs or standalone mode for continuous operation
 - **Comprehensive logging**: Detailed logging for troubleshooting
-- **Batch reporting**: Groups reports by email address to avoid spam
+- **Smart reporting**: Groups reports by label+email combination for organized alerts
 
 ## Requirements
 
@@ -89,25 +91,34 @@ Each port to monitor requires a `port_*` section:
 ```yaml
 port_ssh:
   port: 22
+  label: "Network Security"          # Groups ports for reporting
+  port_label: "SSH"                # Display label in reports
   email: "security@company.com"
   nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
 
 port_https:
   port: 443
+  label: "Network Security"         # Same label = same report group
+  port_label: "HTTPS"
   email: "security@company.com"
   nmap_scan: "nmap -p {port} --open --max-retries 2 192.168.1.0/24"
 
 port_custom:
   port: 8080
+  label: "Development"              # Different label = separate report
+  port_label: "Custom Service"
   email: "devops@company.com"
-  command: "python custom_scanner.py --port 8080 --subnet 192.168.1.0/24"
+  command: "python custom_scanner.py --port {port} --subnet 192.168.1.0/24"
 ```
 
 **Configuration Options:**
 - `port`: TCP port number to monitor
-- `email`: Email address to receive reports
+- `label`: **Required** - Groups ports for reporting (used in email subjects and filenames)
+- `port_label`: **Optional** - Display label for this port in report content
+- `email`: **Optional** - Email address to receive reports (omit for report-only mode)
 - `command`: Custom shell command that outputs IP addresses (one per line) - supports `{port}` placeholder
 - `nmap_scan`: Full nmap command with `{port}` placeholder for flexible scanning options
+- `post_command`: **Optional** - Command to run for each detected host - supports `{host}` and `{port}` placeholders
 
 **Port Placeholder:**
 Both `command` and `nmap_scan` fields support the `{port}` placeholder, which gets replaced with the actual port number:
@@ -115,6 +126,12 @@ Both `command` and `nmap_scan` fields support the `{port}` placeholder, which ge
 - `nmap -p {port} --open --max-retries 2 192.168.1.0/24` - With retry limit
 - `nmap -p {port} --open -T4 192.168.1.0/24` - With timing template
 - `python custom_scanner.py --port {port} --subnet 192.168.1.0/24` - Custom script with port
+
+**Post-Command Placeholders:**
+The `post_command` field supports both `{host}` and `{port}` placeholders:
+- `nmap -sV -p {port} {host}` - Service version scan
+- `curl -I http://{host}` - HTTP header check
+- `python post_command/kafka.py {host}:{port}` - Custom security scanner
 
 ## Usage
 
@@ -156,32 +173,41 @@ CREATE TABLE hosts_port_22 (
 );
 ```
 
-## Email Reports
+## Report Generation
 
-Harbinger generates comprehensive reports for all configured email addresses, ensuring complete monitoring visibility:
+Harbinger uses **label-based grouping** to organize reports intelligently:
 
-**Report Types:**
+### Grouping Logic
+- **First**: Group by `label` field
+- **Second**: Within each label, sub-group by `email` address
+- **Missing email**: Creates report-only files (no email sent)
+- **Same label + same email**: Single combined report
+- **Same label + different emails**: Separate reports per email
+
+### Report Types
 - **New Hosts Detected**: When new hosts are found on monitored ports
 - **Scan Failures**: When commands fail or scripts are missing
 - **No New Hosts**: When scans complete successfully but find no new hosts
 - **Mixed Results**: When some ports have new hosts and others have failures
 
-**Report Content:**
+### Report Content
 - Total count of new hosts detected
 - Total count of scan failures
 - Detailed breakdown by port showing:
+  - Port number and `port_label` (if configured)
   - New hosts found (with post-command output if configured)
   - `[SCAN FAILED: error message]` for failed scans
   - `"No new hosts detected"` for successful scans with no new hosts
 - Timestamp of report generation
 
-**Report Subjects:**
-- `"Harbinger Report: X new host(s) detected"` - New hosts found
-- `"Harbinger Report: Scan failures detected"` - Command/script failures
-- `"Harbinger Report: X new hosts detected, Y scan failures"` - Mixed results
-- `"Harbinger Report: No new hosts detected"` - All scans successful, no new hosts
+### Report Subjects
+- `"Harbinger Report for [LABEL]: X new host(s) detected"` - New hosts found
+- `"Harbinger Report for [LABEL]: Scan failures detected"` - Command/script failures
+- `"Harbinger Report for [LABEL]: X new hosts detected, Y scan failures"` - Mixed results
+- `"Harbinger Report for [LABEL]: No new hosts detected"` - All scans successful, no new hosts
 
-**Always-On Reporting**: Reports are sent to all configured email addresses regardless of scan results, ensuring you always know the monitoring system is operational.
+### Always-On Reporting
+Reports are generated for all configured groups regardless of scan results, ensuring you always know the monitoring system is operational.
 
 ## Report Files
 
@@ -192,14 +218,15 @@ When `save_to_file: true` is enabled in the configuration, Harbinger will save t
 - Compliance and audit trails
 
 **File Format:**
-- Filename: `[username]_[timestamp].txt`
+- Filename: `[LABEL]_[timestamp].txt` (spaces converted to underscores)
 - Location: `reports/` directory (configurable)
 - Content: Full report details including headers and metadata
 
 **Example filenames:**
-- `security_20240925_143022.txt`
-- `admin_20240925_143022.txt`
-- `devops_20240925_143022.txt`
+- `Network_Security_20240925_143022.txt`
+- `Admin_Services_20240925_143022.txt`
+- `Development_20240925_143022.txt`
+- `Internal_Monitoring_20240925_143022.txt` (report-only)
 
 ## Logging
 
@@ -217,6 +244,8 @@ Log levels: DEBUG, INFO, WARNING, ERROR
 ```yaml
 port_ssh:
   port: 22
+  label: "Network Security"
+  port_label: "SSH"
   email: "admin@company.com"
   nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
 ```
@@ -225,30 +254,66 @@ port_ssh:
 ```yaml
 port_custom:
   port: 8080
+  label: "Development"
+  port_label: "Custom Service"
   email: "devops@company.com"
   command: "/usr/local/bin/custom_scanner.sh --port {port} --subnet 10.0.0.0/8"
 ```
 
-### Multiple Email Addresses
+### Label-Based Grouping Examples
+
+**Example 1: Multiple Ports, Same Group**
 ```yaml
 port_ssh:
   port: 22
+  label: "Network Security"
+  port_label: "SSH"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+
+port_https:
+  port: 443
+  label: "Network Security"        # Same label
+  port_label: "HTTPS"
+  email: "security@company.com"    # Same email
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+```
+*Result: One combined report sent to security@company.com*
+
+**Example 2: Same Label, Different Emails**
+```yaml
+port_ssh:
+  port: 22
+  label: "Network Security"
+  port_label: "SSH"
   email: "security@company.com"
   nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
 
 port_rdp:
   port: 3389
-  email: "admin@company.com"
+  label: "Network Security"        # Same label
+  port_label: "RDP"
+  email: "admin@company.com"       # Different email
   nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
 ```
+*Result: Two separate reports - one to each email address*
 
-This configuration will send separate reports to different email addresses.
+**Example 3: Report-Only Mode**
+```yaml
+port_dns:
+  port: 53
+  label: "Internal Monitoring"
+  port_label: "DNS"
+  # No email field = report-only mode
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+```
+*Result: Generates report file only, no email sent*
 
 ### Report Examples
 
 **Example 1: New Hosts Detected**
 ```
-Subject: Harbinger Report: 3 new hosts detected
+Subject: Harbinger Report for Network Security: 3 new hosts detected
 
 New hosts detected: 3
 Scan failures: 0
@@ -265,7 +330,7 @@ Port 80 (HTTP):
 
 **Example 2: Scan Failures**
 ```
-Subject: Harbinger Report: Scan failures detected
+Subject: Harbinger Report for Development: Scan failures detected
 
 New hosts detected: 0
 Scan failures: 1
@@ -278,7 +343,7 @@ Port 8080 (Custom Service):
 
 **Example 3: Mixed Results**
 ```
-Subject: Harbinger Report: 2 new hosts detected, 1 scan failures
+Subject: Harbinger Report for Network Security: 2 new hosts detected, 1 scan failures
 
 New hosts detected: 2
 Scan failures: 1
