@@ -8,9 +8,16 @@ PyYAML>=6.0
 schedule>=1.2.0
 
 # Optional dependencies for post-command scripts
-confluent-kafka>=2.0.0  # For kafka.py post-command script
+confluent-kafka>=2.0.0  # For kafka.py post-command script (Kafka security testing)
+
+# Note: The following post-command scripts are included and use system tools:
+# - port_check.py (uses nmap and socket)
+# - tls_check.py (uses openssl and ssl module)
+# - http_check.py (uses socket and ssl modules)
+# - cert_collector.py (uses openssl and ssl modules)
 
 # Optional dependencies for enhanced functionality
 # (These are system-level tools, not Python packages)
 # - nmap (for network scanning)
+# - openssl (for TLS/SSL certificate operations and TLS checking)
 # - SQLite3 (included with Python)

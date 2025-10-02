@@ -28,7 +28,10 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
   - schedule
 - System tools:
   - nmap (for nmap scanning) - optional, custom commands can be used instead
+  - openssl (for TLS/SSL certificate operations) - required for TLS checking and certificate collection
   - SQLite3 (included with Python)
+- Optional Python packages for advanced features:
+  - confluent-kafka (for Kafka security testing)
 
 ## Supported Operating Systems
 
@@ -44,21 +47,28 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
    ```bash
    pip3 install pyyaml schedule
    ```
-3. Install nmap (if using nmap scanning):
+3. Install system dependencies:
    ```bash
    # Ubuntu/Debian
-   sudo apt-get install nmap
+   sudo apt-get install nmap openssl
    
    # CentOS/RHEL
-   sudo yum install nmap
+   sudo yum install nmap openssl
    
    # Windows (using Chocolatey)
-   choco install nmap
+   choco install nmap openssl
    
    # macOS (using Homebrew)
-   brew install nmap
+   brew install nmap openssl
    ```
-4. Make harbinger.py executable (Unix/Linux/macOS):
+
+4. Install optional Python packages for advanced features:
+   ```bash
+   # For Kafka security testing
+   pip3 install confluent-kafka
+   ```
+
+5. Make harbinger.py executable (Unix/Linux/macOS):
    ```bash
    chmod +x harbinger.py
    ```
@@ -132,6 +142,39 @@ The `post_command` field supports both `{host}` and `{port}` placeholders:
 - `nmap -sV -p {port} {host}` - Service version scan
 - `curl -I http://{host}` - HTTP header check
 - `python post_command/kafka.py {host}:{port}` - Custom security scanner
+
+**Optimized Post-Command Examples:**
+For efficient scanning, use command chaining with `&&` and `||` operators:
+
+- **Basic port check with service detection:**
+  ```yaml
+  post_command: "python post_command/port_check.py {host} {port} && nmap -sV -p {port} {host}"
+  ```
+
+- **HTTP with TLS detection:**
+  ```yaml
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && curl -k -I https://{host} || curl -I http://{host})"
+  ```
+
+- **Kafka with intelligent TLS detection:**
+  ```yaml
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/kafka.py --tls {host} {port} || python post_command/kafka.py {host} {port})"
+  ```
+
+- **HTTP GET request with full response:**
+  ```yaml
+  post_command: "python post_command/port_check.py {host} {port} && python post_command/http_check.py {host} {port}"
+  ```
+
+- **HTTPS GET request with TLS verification:**
+  ```yaml
+  post_command: "python post_command/port_check.py {host} {port} && python post_command/tls_check.py {host} {port} && python post_command/http_check.py {host} {port} https"
+  ```
+
+**Command Chaining Logic:**
+- `command1 && command2` - Run command2 only if command1 succeeds
+- `command1 || command2` - Run command2 only if command1 fails
+- `(command1 && command2) || command3` - Try command1 and command2, fallback to command3 if either fails
 
 ## Usage
 
@@ -240,6 +283,32 @@ Log levels: DEBUG, INFO, WARNING, ERROR
 
 ## Examples
 
+### Optimized Scanning Strategy
+
+Harbinger includes intelligent post-command scripts that optimize scanning performance:
+
+1. **port_check.py** - Fast port connectivity verification
+2. **tls_check.py** - TLS/SSL capability detection  
+3. **kafka.py** - Kafka security testing with TLS support and smart error detection
+4. **http_check.py** - HTTP GET requests with full response capture
+5. **cert_collector.py** - TLS certificate collection and truststore creation
+
+**Optimization Benefits:**
+- **Speed**: Skip expensive operations when ports are closed
+- **Intelligence**: Choose appropriate scanning methods based on TLS detection
+- **Efficiency**: Avoid redundant checks and timeouts
+- **Reliability**: Graceful fallbacks when services aren't available
+- **Smart Error Detection**: Distinguish between service failures and protocol mismatches
+
+**Kafka Security Scanner Features:**
+- **TLS Support**: Use `--tls` flag for TLS-only testing
+- **Truststore Integration**: Automatically uses collected certificates for self-signed servers
+- **Intelligent Error Messages**: 
+  - "Not a Kafka service" for protocol mismatches
+  - "Connection refused - service not running" for connection failures
+  - "TLS connection failed - [specific error]" for SSL issues
+  - "Authentication failed" for auth-related errors
+
 ### Basic SSH Monitoring
 ```yaml
 port_ssh:
@@ -248,6 +317,79 @@ port_ssh:
   port_label: "SSH"
   email: "admin@company.com"
   nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && nmap -sV -p {port} {host}"
+```
+
+### HTTP Service with TLS Detection
+```yaml
+port_web:
+  port: 80
+  label: "Web Services"
+  port_label: "HTTP"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && curl -k -I https://{host} || curl -I http://{host})"
+```
+
+### Intelligent Kafka Security Scanning
+```yaml
+port_kafka:
+  port: 9092
+  label: "Data Services"
+  port_label: "Kafka"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/kafka.py --tls {host} {port} || python post_command/kafka.py {host} {port})"
+```
+
+### TLS Certificate Collection and Validation
+```yaml
+port_https_cert:
+  port: 443
+  label: "Certificate Management"
+  port_label: "HTTPS with Cert Collection"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && python post_command/tls_check.py {host} {port} && python post_command/cert_collector.py {host} {port} && python post_command/kafka.py --tls {host} {port}"
+```
+
+**Certificate Collection Workflow:**
+1. **Collect Certificates**: `cert_collector.py` retrieves the full certificate chain
+2. **Create Truststore**: Saves certificates to `ca_certs/{host}-truststore.pem`
+3. **Generate Analysis**: Creates `ca_certs/{host}-truststore.txt` with detailed certificate information
+4. **Auto-Validation**: Other scripts automatically use the truststore for self-signed certificates
+
+### HTTP Service with Full Response Capture
+```yaml
+port_http:
+  port: 80
+  label: "Web Services"
+  port_label: "HTTP"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && python post_command/http_check.py {host} {port}"
+```
+
+### HTTPS Service with TLS Verification
+```yaml
+port_https:
+  port: 443
+  label: "Web Services"
+  port_label: "HTTPS"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && python post_command/tls_check.py {host} {port} && python post_command/http_check.py {host} {port} https"
+```
+
+### Custom Web Application Testing
+```yaml
+port_webapp:
+  port: 8080
+  label: "Development"
+  port_label: "Web App"
+  email: "devops@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && python post_command/http_check.py {host} {port} http /api/status"
 ```
 
 ### Custom Command Monitoring
@@ -392,6 +534,30 @@ When reports show `[SCAN FAILED: ...]` errors:
 - Verify network connectivity to target subnets
 - Check if target networks are accessible from monitoring host
 - Test basic connectivity: `ping`, `telnet`, or `nc` to target hosts
+
+### Post-Command Script Troubleshooting
+
+**Kafka Scanner Issues:**
+- **"Not a Kafka service"**: Service is running but not Kafka - this is normal for non-Kafka ports
+- **"TLS connection failed"**: Check if the service requires TLS or if certificates are valid
+- **"Connection refused"**: Service is not running on the target port
+- **Truststore errors**: Run `cert_collector.py` first to collect valid certificates
+
+**Certificate Collection Issues:**
+- **OpenSSL errors**: Ensure OpenSSL is installed and accessible
+- **DNS resolution**: Verify hostname resolution works: `nslookup <hostname>`
+- **Certificate parsing**: Check `ca_certs/{host}-truststore.txt` for detailed certificate information
+- **Permission errors**: Ensure write access to the `ca_certs/` directory
+
+**Port Check Issues:**
+- **Timeout errors**: Network latency or firewall blocking - increase timeout if needed
+- **Connection refused**: Port is closed or service not running
+- **Nmap failures**: Script falls back to basic socket connection automatically
+
+**TLS Check Issues:**
+- **"TLS not detected"**: Service doesn't support TLS/SSL encryption
+- **Certificate errors**: Service has invalid or self-signed certificates
+- **Timeout errors**: Service is slow to respond or network issues
 
 ### OS-Specific Issues
 

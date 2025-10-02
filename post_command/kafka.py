@@ -14,6 +14,8 @@ import sys
 import socket
 import ssl
 import time
+import os
+import argparse
 from confluent_kafka import Consumer, Producer, KafkaError, KafkaException
 
 def test_kafka_connection(host, port, use_ssl=False):
@@ -54,20 +56,37 @@ def test_kafka_consumer(host, port, use_ssl=False):
         }
         
         if use_ssl:
-            config.update({
-                'security.protocol': 'SSL',
-                'ssl.check.hostname': False,
-                'ssl.verify': False,
-            })
+            # Check if truststore file exists for this host
+            truststore_file = f'ca_certs/{host}-truststore.pem'
+            if os.path.exists(truststore_file):
+                config.update({
+                    'security.protocol': 'SSL',
+                    'ssl.ca.location': truststore_file,
+                })
+            else:
+                # Fallback to no verification if no truststore
+                config.update({
+                    'security.protocol': 'SSL',
+                })
         
         consumer = Consumer(config)
         
         # Try to get metadata
         metadata = consumer.list_topics(timeout=5)
         consumer.close()
-        return True
-    except Exception:
-        return False
+        return True, None
+    except Exception as e:
+        error_msg = str(e).lower()
+        if 'connection refused' in error_msg or 'connection reset' in error_msg:
+            return False, 'Connection refused - service not running'
+        elif 'timeout' in error_msg:
+            return False, 'Connection timeout - service not responding'
+        elif 'ssl' in error_msg or 'certificate' in error_msg:
+            return False, f'TLS connection failed - {str(e)}'
+        elif 'authentication' in error_msg or 'authorization' in error_msg:
+            return False, f'Authentication failed - {str(e)}'
+        else:
+            return False, f'Not a Kafka service - {str(e)}'
 
 def test_kafka_producer(host, port, use_ssl=False):
     """Test Kafka producer connection"""
@@ -79,61 +98,100 @@ def test_kafka_producer(host, port, use_ssl=False):
         }
         
         if use_ssl:
-            config.update({
-                'security.protocol': 'SSL',
-                'ssl.check.hostname': False,
-                'ssl.verify': False,
-            })
+            # Check if truststore file exists for this host
+            truststore_file = f'ca_certs/{host}-truststore.pem'
+            if os.path.exists(truststore_file):
+                config.update({
+                    'security.protocol': 'SSL',
+                    'ssl.ca.location': truststore_file,
+                })
+            else:
+                # Fallback to no verification if no truststore
+                config.update({
+                    'security.protocol': 'SSL',
+                })
         
         producer = Producer(config)
         
         # Try to get metadata
         metadata = producer.list_topics(timeout=5)
         producer.flush()
-        return True
-    except Exception:
-        return False
+        return True, None
+    except Exception as e:
+        error_msg = str(e).lower()
+        if 'connection refused' in error_msg or 'connection reset' in error_msg:
+            return False, 'Connection refused - service not running'
+        elif 'timeout' in error_msg:
+            return False, 'Connection timeout - service not responding'
+        elif 'ssl' in error_msg or 'certificate' in error_msg:
+            return False, f'TLS connection failed - {str(e)}'
+        elif 'authentication' in error_msg or 'authorization' in error_msg:
+            return False, f'Authentication failed - {str(e)}'
+        else:
+            return False, f'Not a Kafka service - {str(e)}'
 
-def scan_kafka_security(host, port=9092):
+def scan_kafka_security(host, port=9092, tls_only=False):
     """Scan Kafka security configuration"""
     
-    # Test 1: No encryption, no authentication
-    print(f"Testing {host}:{port} - No encryption, no authentication...", file=sys.stderr)
+    if tls_only:
+        # Test only TLS/SSL connection
+        print(f"Testing {host}:{port} - TLS only...", file=sys.stderr)
+        
+        if test_kafka_connection(host, port, use_ssl=True):
+            consumer_success, consumer_error = test_kafka_consumer(host, port, use_ssl=True)
+            producer_success, producer_error = test_kafka_producer(host, port, use_ssl=True)
+            
+            if consumer_success or producer_success:
+                print("TLS connection successful")
+                return
+            else:
+                # Show the most specific error message
+                if consumer_error and producer_error:
+                    error_msg = consumer_error if len(consumer_error) < len(producer_error) else producer_error
+                else:
+                    error_msg = consumer_error or producer_error or "TLS connection failed"
+                print(error_msg)
+                return
+        else:
+            print("TLS connection failed")
+            return
+    
+    # Default behavior - test only plain connection (no TLS)
+    print(f"Testing {host}:{port} - Plain connection...", file=sys.stderr)
     
     if test_kafka_connection(host, port, use_ssl=False):
-        if test_kafka_consumer(host, port, use_ssl=False) or test_kafka_producer(host, port, use_ssl=False):
-            print("No encryption and no authentication")
+        consumer_success, consumer_error = test_kafka_consumer(host, port, use_ssl=False)
+        producer_success, producer_error = test_kafka_producer(host, port, use_ssl=False)
+        
+        if consumer_success or producer_success:
+            print("Plain connection successful")
             return
-    
-    # Test 2: Encryption, no authentication
-    print(f"Testing {host}:{port} - Encryption, no authentication...", file=sys.stderr)
-    
-    if test_kafka_connection(host, port, use_ssl=True):
-        if test_kafka_consumer(host, port, use_ssl=True) or test_kafka_producer(host, port, use_ssl=True):
-            print("Encryption and no authentication")
+        else:
+            # Show the most specific error message
+            if consumer_error and producer_error:
+                error_msg = consumer_error if len(consumer_error) < len(producer_error) else producer_error
+            else:
+                error_msg = consumer_error or producer_error or "Plain connection failed"
+            print(error_msg)
             return
-    
-    # If we get here, no connection was possible
-    print("No vulnerability detected")
+    else:
+        print("Plain connection failed")
+        return
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: kafka.py <host> [port]", file=sys.stderr)
-        print("       kafka.py <host:port>", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Kafka Security Scanner')
+    parser.add_argument('host', help='Kafka host to test')
+    parser.add_argument('port', nargs='?', type=int, default=9092, help='Kafka port (default: 9092)')
+    parser.add_argument('--tls', '-t', action='store_true', help='Test TLS/SSL connection only')
     
-    host = sys.argv[1]
-    port = 9092  # Default Kafka port
+    args = parser.parse_args()
     
-    # Check if port is specified as second argument
-    if len(sys.argv) == 3:
-        try:
-            port = int(sys.argv[2])
-        except ValueError:
-            print(f"Error: Invalid port '{sys.argv[2]}'", file=sys.stderr)
-            sys.exit(1)
+    host = args.host
+    port = args.port
+    tls_only = args.tls
+    
     # Check if port is specified in host (host:port format)
-    elif ':' in host:
+    if ':' in host:
         host, port_str = host.split(':', 1)
         try:
             port = int(port_str)
@@ -141,7 +199,7 @@ def main():
             print(f"Error: Invalid port '{port_str}'", file=sys.stderr)
             sys.exit(1)
     
-    scan_kafka_security(host, port)
+    scan_kafka_security(host, port, tls_only)
 
 if __name__ == '__main__':
     main()

@@ -278,12 +278,12 @@ class HarbingerMonitor:
             hosts = data.get('hosts', [])
             error = data.get('error')
             
-            # Get label and post_command from config for this port
-            label = self.get_port_label(port)
+            # Get port_label and post_command from config for this port
+            port_label = self.get_port_port_label(port)
             post_command = self.get_port_post_command(port)
             
-            if label:
-                port_header = f"Port {port} ({label}):"
+            if port_label:
+                port_header = f"Port {port} ({port_label}):"
             else:
                 port_header = f"Port {port}:"
             
@@ -425,6 +425,14 @@ Report saved: {datetime.now().isoformat()}
             if section_name.startswith('port_'):
                 if section_data.get('port') == port:
                     return section_data.get('label', '')
+        return ''
+    
+    def get_port_port_label(self, port):
+        """Get the port_label for a specific port from configuration"""
+        for section_name, section_data in self.config.items():
+            if section_name.startswith('port_'):
+                if section_data.get('port') == port:
+                    return section_data.get('port_label', '')
         return ''
     
     def get_port_post_command(self, port):
