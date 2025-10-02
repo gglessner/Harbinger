@@ -23,12 +23,12 @@ def openssl_tls_check(host, port):
     try:
         # Use openssl s_client with optimized settings for speed
         # -connect: Connect to host:port
-        # -verify_return_error: Exit with error if certificate verification fails
         # -quiet: Suppress verbose output
-        # -timeout: 5 second timeout
+        # -servername: Set SNI (Server Name Indication) for proper TLS handshake
+        # Note: We don't use -verify_return_error because we want to detect TLS even with invalid certificates
         command = [
             'openssl', 's_client', '-connect', f'{host}:{port}',
-            '-verify_return_error', '-quiet', '-timeout', '5'
+            '-quiet', '-servername', host
         ]
         
         # Send QUIT command and capture output
@@ -40,14 +40,38 @@ def openssl_tls_check(host, port):
             text=True
         )
         
-        # Send QUIT command to close connection immediately
-        stdout, stderr = process.communicate(input='Q\n', timeout=10)
+        # Send QUIT command and capture output with a shorter timeout
+        try:
+            stdout, stderr = process.communicate(input='Q\n', timeout=5)
+        except subprocess.TimeoutExpired:
+            # If timeout, kill the process and get partial output
+            process.kill()
+            stdout, stderr = process.communicate()
         
-        # Check return code - 0 means successful TLS connection
-        if process.returncode == 0:
-            return ('tls', 'TLS detected')
-        else:
-            return ('no_tls', 'TLS not detected')
+        # Check if TLS handshake was successful by looking for TLS-related output
+        # Even if certificate verification fails, we still have a TLS connection
+        output = stdout + stderr
+        
+        # Look for indicators of successful TLS handshake
+        tls_indicators = [
+            'verify return:',
+            'Verify return code:',
+            'SSL-Session:',
+            'Protocol  :',
+            'Cipher    :',
+            'CONNECTED(',
+            'New, TLS',
+            'depth=',
+            'CN='
+        ]
+        
+        # Check if any TLS indicators are present in the output
+        for indicator in tls_indicators:
+            if indicator in output:
+                return ('tls', 'TLS detected')
+        
+        # If no TLS indicators found, it's likely not a TLS service
+        return ('no_tls', 'TLS not detected')
         
     except subprocess.TimeoutExpired:
         return ('no_tls', 'TLS not detected')
