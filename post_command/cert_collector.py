@@ -16,6 +16,8 @@ import ssl
 import subprocess
 import os
 import time
+import hashlib
+import platform
 from pathlib import Path
 
 def dns_lookup(host):
@@ -39,6 +41,141 @@ def dns_lookup(host):
         print(f"DNS lookup error for {host}: {e}, using original hostname")
         return host
 
+def check_windows_symlink_support():
+    """
+    Check if Windows supports symlinks and provide guidance.
+    Returns tuple: (can_create_symlinks, guidance_message)
+    """
+    if platform.system() != 'Windows':
+        return True, "Symlinks supported (non-Windows system)"
+    
+    try:
+        # Try to create a temporary symlink to test capabilities
+        test_file = Path('temp_test_file.txt')
+        test_link = Path('temp_test_link.txt')
+        
+        # Create a temporary file
+        test_file.write_text('test')
+        
+        try:
+            # Try to create symlink
+            test_link.unlink(missing_ok=True)  # Remove if exists
+            os.symlink(test_file, test_link)
+            
+            # Clean up
+            test_link.unlink()
+            test_file.unlink()
+            
+            return True, "Symlinks supported (Windows with proper privileges)"
+            
+        except OSError:
+            # Clean up on failure
+            test_file.unlink(missing_ok=True)
+            test_link.unlink(missing_ok=True)
+            
+            return False, """Symlinks not supported. To enable on Windows:
+1. Enable Developer Mode: Settings > Update & Security > For developers > Developer mode
+2. Or run as Administrator
+3. Or use Group Policy to enable symlinks for your user account"""
+    
+    except Exception:
+        return False, "Could not test symlink capabilities"
+
+def attempt_admin_privileges():
+    """
+    Attempt to restart the script with administrator privileges on Windows.
+    Returns True if already running as admin or if escalation was attempted.
+    """
+    if platform.system() != 'Windows':
+        return True  # Not needed on non-Windows
+    
+    try:
+        import ctypes
+        # Check if already running as administrator
+        if ctypes.windll.shell32.IsUserAnAdmin():
+            return True
+        
+        # Attempt to restart with administrator privileges
+        print("Attempting to restart with administrator privileges for symlink creation...", file=sys.stderr)
+        ctypes.windll.shell32.ShellExecuteW(
+            None, "runas", sys.executable, " ".join(sys.argv), None, 1
+        )
+        sys.exit(0)  # Exit current instance
+        
+    except Exception as e:
+        print(f"Could not escalate privileges: {e}", file=sys.stderr)
+        return False
+
+def deduplicate_certificate_file(pem_file_path, host, port):
+    """
+    Deduplicate certificate file using SHA256 hash and symlinks.
+    Creates symlink to existing file if hash matches, otherwise keeps original file.
+    Returns the final file path (either original or symlink).
+    """
+    try:
+        # Read the .pem file content
+        with open(pem_file_path, 'rb') as f:
+            pem_content = f.read()
+        
+        # Calculate SHA256 hash
+        sha256_hash = hashlib.sha256(pem_content).hexdigest()
+        
+        # Get first 16 bytes (32 hex characters) of the hash
+        hash_prefix = sha256_hash[:32]
+        
+        # Create raw_certs directory if it doesn't exist
+        raw_certs_dir = Path('ca_certs/raw_certs')
+        raw_certs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Target file in raw_certs directory
+        raw_file = raw_certs_dir / f"{hash_prefix}.pem"
+        
+        # Check symlink capabilities once and cache the result
+        can_symlink, symlink_msg = check_windows_symlink_support()
+        
+        if raw_file.exists():
+            # File with same content exists, replace with symlink/copy
+            print(f"Duplicate certificate found (hash: {hash_prefix[:8]}...), creating link")
+            
+            # Remove the original file
+            os.remove(pem_file_path)
+            
+            if can_symlink:
+                # Create symlink
+                os.symlink(raw_file, pem_file_path)
+                print(f"Created symlink: {pem_file_path} -> {raw_file}")
+            else:
+                # Copy the file instead
+                import shutil
+                shutil.copy2(raw_file, pem_file_path)
+                print(f"Copied file: {pem_file_path} <- {raw_file}")
+                print(f"Note: {symlink_msg}")
+        else:
+            # First occurrence of this certificate, move to raw_certs
+            print(f"New certificate (hash: {hash_prefix[:8]}...), storing in raw_certs")
+            
+            # Move the file to raw_certs
+            import shutil
+            shutil.move(str(pem_file_path), str(raw_file))
+            
+            if can_symlink:
+                # Create symlink back to the original location
+                os.symlink(raw_file, pem_file_path)
+                print(f"Created symlink: {pem_file_path} -> {raw_file}")
+            else:
+                # Copy instead of symlink
+                import shutil
+                shutil.copy2(raw_file, pem_file_path)
+                print(f"Copied file: {pem_file_path} <- {raw_file}")
+                print(f"Note: {symlink_msg}")
+        
+        return pem_file_path
+        
+    except Exception as e:
+        print(f"Warning: Certificate deduplication failed: {e}", file=sys.stderr)
+        # Return original path if deduplication fails
+        return pem_file_path
+
 def collect_certificates_openssl(host, port, hostname):
     """
     Collect certificates using openssl s_client command.
@@ -50,7 +187,7 @@ def collect_certificates_openssl(host, port, hostname):
         ca_certs_dir.mkdir(exist_ok=True)
         
         # Create truststore filename
-        truststore_file = ca_certs_dir / f"{host}-truststore.pem"
+        truststore_file = ca_certs_dir / f"{host}-{port}.pem"
         
         # Build openssl command
         openssl_cmd = [
@@ -126,11 +263,15 @@ def collect_certificates_openssl(host, port, hostname):
             for cert in certs:
                 f.write(cert + '\n\n')
         
+        # Perform deduplication using SHA256 hash (skip on Windows for simplicity)
+        if platform.system() != 'Windows':
+            truststore_file = deduplicate_certificate_file(truststore_file, host, port)
+        
         # Create result message and collect certificate details
         result_msg = f'Collected {len(certs)} certificates to {truststore_file}'
         
         # Create truststore info file
-        truststore_info_file = ca_certs_dir / f"{host}-truststore.txt"
+        truststore_info_file = ca_certs_dir / f"{host}-{port}.txt"
         cert_details_list = []
         
         # Extract certificate details from each certificate in the chain
@@ -227,7 +368,7 @@ def collect_certificates_python(host, port, hostname):
         ca_certs_dir.mkdir(exist_ok=True)
         
         # Create truststore filename
-        truststore_file = ca_certs_dir / f"{host}-truststore.pem"
+        truststore_file = ca_certs_dir / f"{host}-{port}.pem"
         
         # Create SSL context
         context = ssl.create_default_context()
@@ -259,6 +400,10 @@ def collect_certificates_python(host, port, hostname):
                 # Write certificate to truststore file
                 with open(truststore_file, 'w') as f:
                     f.write('\n'.join(pem_lines) + '\n')
+                
+                # Perform deduplication using SHA256 hash (skip on Windows for simplicity)
+                if platform.system() != 'Windows':
+                    truststore_file = deduplicate_certificate_file(truststore_file, host, port)
         
         return ('success', f'Collected certificate to {truststore_file}\nNote: Client CA information not available with Python method - use OpenSSL for full details')
         
@@ -266,12 +411,18 @@ def collect_certificates_python(host, port, hostname):
         return ('error', f'Python certificate collection failed: {str(e)}')
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python cert_collector.py <host> <port>", file=sys.stderr)
+    if len(sys.argv) < 3 or len(sys.argv) > 4:
+        print("Usage: python cert_collector.py <host> <port> [--admin]", file=sys.stderr)
+        print("  --admin: Attempt to run with administrator privileges for symlink creation", file=sys.stderr)
         sys.exit(1)
     
     host = sys.argv[1]
     port = sys.argv[2]
+    use_admin = len(sys.argv) == 4 and sys.argv[3] == '--admin'
+    
+    # Handle admin privilege escalation if requested
+    if use_admin:
+        attempt_admin_privileges()
     
     # Validate port number
     try:

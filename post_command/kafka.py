@@ -57,7 +57,7 @@ def test_kafka_consumer(host, port, use_ssl=False):
         
         if use_ssl:
             # Check if truststore file exists for this host
-            truststore_file = f'ca_certs/{host}-truststore.pem'
+            truststore_file = f'ca_certs/{host}-{port}.pem'
             if os.path.exists(truststore_file):
                 config.update({
                     'security.protocol': 'SSL',
@@ -99,7 +99,7 @@ def test_kafka_producer(host, port, use_ssl=False):
         
         if use_ssl:
             # Check if truststore file exists for this host
-            truststore_file = f'ca_certs/{host}-truststore.pem'
+            truststore_file = f'ca_certs/{host}-{port}.pem'
             if os.path.exists(truststore_file):
                 config.update({
                     'security.protocol': 'SSL',

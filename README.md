@@ -299,15 +299,23 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
 - **Efficiency**: Avoid redundant checks and timeouts
 - **Reliability**: Graceful fallbacks when services aren't available
 - **Smart Error Detection**: Distinguish between service failures and protocol mismatches
+- **Certificate Management**: Automatic collection and storage of TLS certificates with cross-platform deduplication
 
 **Kafka Security Scanner Features:**
 - **TLS Support**: Use `--tls` flag for TLS-only testing
-- **Truststore Integration**: Automatically uses collected certificates for self-signed servers
+- **Certificate Integration**: Automatically uses collected certificates for self-signed servers
+- **Port-Specific Certificates**: Uses `ca_certs/{host}-{port}.pem` format for proper certificate management
 - **Intelligent Error Messages**: 
   - "Not a Kafka service" for protocol mismatches
   - "Connection refused - service not running" for connection failures
   - "TLS connection failed - [specific error]" for SSL issues
   - "Authentication failed" for auth-related errors
+
+**Certificate Collection Features:**
+- **Cross-Platform Storage**: Linux/macOS uses deduplication with symlinks, Windows uses normal files
+- **Port-Specific Filenames**: Prevents collisions between different ports on the same host
+- **Automatic Integration**: Other scripts automatically find and use the correct certificate files
+- **Detailed Analysis**: Generates human-readable certificate chain analysis files
 
 ### Basic SSH Monitoring
 ```yaml
@@ -353,11 +361,25 @@ port_https_cert:
   post_command: "python post_command/port_check.py {host} {port} && python post_command/tls_check.py {host} {port} && python post_command/cert_collector.py {host} {port} && python post_command/kafka.py --tls {host} {port}"
 ```
 
+**Certificate Collection Output:**
+- Creates `ca_certs/{host}-{port}.pem` with the certificate chain
+- Creates `ca_certs/{host}-{port}.txt` with detailed certificate analysis
+- On Linux/macOS: Automatically deduplicates identical certificates using SHA256 hashes
+- On Windows: Creates normal files for maximum compatibility
+
 **Certificate Collection Workflow:**
 1. **Collect Certificates**: `cert_collector.py` retrieves the full certificate chain
-2. **Create Truststore**: Saves certificates to `ca_certs/{host}-truststore.pem`
-3. **Generate Analysis**: Creates `ca_certs/{host}-truststore.txt` with detailed certificate information
-4. **Auto-Validation**: Other scripts automatically use the truststore for self-signed certificates
+2. **Create Certificate Files**: Saves certificates to `ca_certs/{host}-{port}.pem` (port-specific filenames)
+3. **Generate Analysis**: Creates `ca_certs/{host}-{port}.txt` with detailed certificate information
+4. **Auto-Validation**: Other scripts automatically use the certificate files for self-signed certificates
+5. **Cross-Platform Deduplication**: 
+   - **Linux/macOS**: Uses SHA256 hash-based deduplication with symlinks for space efficiency
+   - **Windows**: Creates normal files for maximum compatibility
+
+**Certificate File Format:**
+- **Filename**: `ca_certs/{host}-{port}.pem` (e.g., `ca_certs/10.0.0.1-443.pem`)
+- **Benefits**: No filename collisions between different ports on the same host
+- **Integration**: `kafka.py` automatically finds and uses the correct certificate file
 
 ### HTTP Service with Full Response Capture
 ```yaml
@@ -546,8 +568,10 @@ When reports show `[SCAN FAILED: ...]` errors:
 **Certificate Collection Issues:**
 - **OpenSSL errors**: Ensure OpenSSL is installed and accessible
 - **DNS resolution**: Verify hostname resolution works: `nslookup <hostname>`
-- **Certificate parsing**: Check `ca_certs/{host}-truststore.txt` for detailed certificate information
+- **Certificate parsing**: Check `ca_certs/{host}-{port}.txt` for detailed certificate information
 - **Permission errors**: Ensure write access to the `ca_certs/` directory
+- **Windows symlinks**: On Windows, certificate files are created normally (no symlinks needed)
+- **Linux/macOS deduplication**: Duplicate certificates are automatically deduplicated using SHA256 hashes
 
 **Port Check Issues:**
 - **Timeout errors**: Network latency or firewall blocking - increase timeout if needed
@@ -556,8 +580,9 @@ When reports show `[SCAN FAILED: ...]` errors:
 
 **TLS Check Issues:**
 - **"TLS not detected"**: Service doesn't support TLS/SSL encryption
-- **Certificate errors**: Service has invalid or self-signed certificates
+- **Certificate errors**: Service has invalid or self-signed certificates (normal for self-signed certs)
 - **Timeout errors**: Service is slow to respond or network issues
+- **Improved detection**: Script now correctly identifies TLS even with certificate verification issues
 
 ### OS-Specific Issues
 
@@ -574,6 +599,44 @@ When reports show `[SCAN FAILED: ...]` errors:
 **macOS:**
 - nmap may require Xcode command line tools
 - Gatekeeper may block execution - allow in System Preferences if prompted
+
+## Certificate Management and Storage
+
+### Cross-Platform Certificate Storage
+
+Harbinger includes an intelligent certificate storage system that adapts to your operating system:
+
+**Linux/macOS (Space-Efficient Mode):**
+- Uses SHA256 hash-based deduplication
+- Identical certificates stored only once in `ca_certs/raw_certs/`
+- Symlinks used to reference certificates from multiple host:port combinations
+- Automatic space savings for environments with duplicate certificates
+
+**Windows (Compatibility Mode):**
+- Creates normal certificate files in `ca_certs/{host}-{port}.pem`
+- No symlinks or complex file operations
+- Maximum compatibility with Windows file systems
+- Simple, reliable operation
+
+### Certificate File Structure
+
+```
+ca_certs/
+├── 10.0.0.1-443.pem          # Certificate file (or symlink on Linux/macOS)
+├── 10.0.0.1-443.txt          # Certificate analysis file
+├── 10.0.0.17-443.pem         # Certificate file (or symlink on Linux/macOS)
+├── 10.0.0.17-443.txt         # Certificate analysis file
+└── raw_certs/                # Linux/macOS only - unique certificates by hash
+    ├── f5cee1f4...pem        # Actual certificate file (SHA256 hash-based)
+    └── 9b9b2250...pem        # Actual certificate file (SHA256 hash-based)
+```
+
+### Benefits of Port-Specific Filenames
+
+- **No Collisions**: Same host with different ports (HTTP vs HTTPS) have separate certificate files
+- **Port-Specific Configurations**: Each port can have its own TLS configuration
+- **Automatic Integration**: `kafka.py` and other scripts automatically find the correct certificate
+- **Easy Management**: Clear naming convention makes certificate files easy to identify
 
 ## Security Considerations
 
