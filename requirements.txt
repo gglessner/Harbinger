@@ -9,6 +9,7 @@ schedule>=1.2.0
 
 # Optional dependencies for post-command scripts
 confluent-kafka>=2.0.0  # For kafka.py post-command script (Kafka security testing)
+redis>=4.0.0  # For redis.py post-command script (Redis security testing)
 
 # Note: The following post-command scripts are included and use system tools:
 # - port_check.py (uses nmap and socket)
