@@ -13,7 +13,7 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
 - **Multi-port monitoring**: Monitor multiple TCP ports simultaneously
 - **Label-based grouping**: Group ports by custom labels for organized reporting
 - **Flexible scanning**: Support for custom shell commands or nmap scans
-- **Email reporting**: Automatic email notifications for new host discoveries
+- **Email reporting**: Automatic email notifications via SMTP or local mail command
 - **Report-only mode**: Generate local reports without sending emails
 - **Database tracking**: SQLite3 database with separate tables per port
 - **Dual operation modes**: Cron mode for scheduled runs or standalone mode for continuous operation
@@ -50,10 +50,10 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
 3. Install system dependencies:
    ```bash
    # Ubuntu/Debian
-   sudo apt-get install nmap openssl
+   sudo apt-get install nmap openssl mailutils  # mailutils for local mail support
    
    # CentOS/RHEL
-   sudo yum install nmap openssl
+   sudo yum install nmap openssl mailx  # mailx for local mail support
    
    # Windows (using Chocolatey)
    choco install nmap openssl
@@ -61,6 +61,8 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
    # macOS (using Homebrew)
    brew install nmap openssl
    ```
+
+**Note:** For local mail support on Unix/Linux systems, install `mailutils` (Debian/Ubuntu) or `mailx` (CentOS/RHEL). Windows users should use SMTP configuration.
 
 4. Install optional Python packages for advanced features:
    ```bash
@@ -78,6 +80,10 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
 Edit `harbinger.yaml` to configure your monitoring setup:
 
 ### Email Configuration
+
+Harbinger supports two email delivery methods:
+
+**Option 1: SMTP Configuration** (for external email services like Gmail, Office 365, etc.)
 ```yaml
 email:
   smtp_server: "smtp.gmail.com"
@@ -87,6 +93,19 @@ email:
   password: "your-app-password"
   from_address: "your-email@gmail.com"
 ```
+
+**Option 2: Local Mail Configuration** (for Unix/Linux systems using the `mail` command)
+```yaml
+email:
+  use_local_mail: true
+  mail_command: "mail"  # or "/usr/bin/mail" for full path
+```
+
+**Notes:**
+- Local mail configuration uses the system `mail` command (similar to `mail -s "subject" recipient`)
+- Requires the `mail` command to be installed and configured on your system
+- Works on Unix/Linux systems where local mail delivery is configured
+- Not supported on Windows (use SMTP instead)
 
 ### Report Configuration
 ```yaml
@@ -311,6 +330,10 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
   - "TLS connection failed - [specific error]" for SSL issues
   - "Authentication failed" for auth-related errors
 
+**Smart Chain Wrapper Script:**
+- **kafka.sh** (Linux/macOS): Complete chain with always-success return code
+- **Benefits**: Captures all logs while treating expected failures as success
+
 **Certificate Collection Features:**
 - **Cross-Platform Storage**: Linux/macOS uses deduplication with symlinks, Windows uses normal files
 - **Port-Specific Filenames**: Prevents collisions between different ports on the same host
@@ -348,6 +371,17 @@ port_kafka:
   email: "security@company.com"
   nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
   post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/kafka.py --tls {host} {port} || python post_command/kafka.py {host} {port})"
+```
+
+### Smart Chain Wrapper (Recommended for Linux/macOS)
+```yaml
+port_kafka_smart:
+  port: 9092
+  label: "Data Services"
+  port_label: "Kafka Smart Chain"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/kafka.sh {host} {port}"
 ```
 
 ### TLS Certificate Collection and Validation
@@ -529,7 +563,9 @@ Port 8080 (Custom Service):
 
 1. **Check logs**: Review `harbinger.log` for error messages
 2. **Test commands**: Verify your scan commands work manually
-3. **Email configuration**: Test SMTP settings with a simple email test
+3. **Email configuration**: 
+   - **SMTP**: Test SMTP settings with a simple email test
+   - **Local mail**: Test with `echo "test" | mail -s "test" your-email@domain.com`
 4. **Permissions**: Ensure harbinger.py has execute permissions (Unix/Linux/macOS)
 5. **Network access**: Verify the monitoring system can reach target networks
 
@@ -599,6 +635,26 @@ When reports show `[SCAN FAILED: ...]` errors:
 **macOS:**
 - nmap may require Xcode command line tools
 - Gatekeeper may block execution - allow in System Preferences if prompted
+
+### Email Delivery Troubleshooting
+
+**SMTP Issues:**
+- **Authentication failed**: Verify username and password are correct
+- **Connection timeout**: Check firewall rules and SMTP server accessibility
+- **TLS errors**: Ensure `use_tls: true` matches your SMTP server configuration
+- **Gmail**: Use app-specific passwords instead of regular passwords
+
+**Local Mail Issues:**
+- **"mail: command not found"**: Install `mailutils` (Debian/Ubuntu) or `mailx` (CentOS/RHEL)
+- **"Cannot send message"**: Ensure local mail delivery is configured on your system
+- **Mail not delivered**: Check mail logs with `sudo tail -f /var/log/mail.log`
+- **Permission denied**: Ensure the `mail` command has proper permissions
+- **Testing**: Test local mail delivery with `echo "test" | mail -s "test" user@localhost`
+
+**Cross-Platform Considerations:**
+- **Windows**: Use SMTP configuration (local mail not available)
+- **Unix/Linux**: Both SMTP and local mail options are supported
+- **macOS**: Both SMTP and local mail options are supported
 
 ## Certificate Management and Storage
 

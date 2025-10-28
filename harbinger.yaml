@@ -3,13 +3,19 @@
 # License: GNU GPL
 
 # Email Configuration
+# Option 1: SMTP Configuration (commented out)
+# email:
+#   smtp_server: "smtp.gmail.com"
+#   smtp_port: 587
+#   use_tls: true
+#   username: "test@example.com"
+#   password: "test-password"
+#   from_address: "test@example.com"
+
+# Option 2: Local Mail Configuration (using mail -s command)
 email:
-  smtp_server: "smtp.gmail.com"
-  smtp_port: 587
-  use_tls: true
-  username: "test@example.com"
-  password: "test-password"
-  from_address: "test@example.com"
+  use_local_mail: true
+  mail_command: "mail"  # or "/usr/bin/mail" for full path
 
 # Logging Configuration
 logging:
