@@ -16,6 +16,7 @@
 email:
   use_local_mail: true
   mail_command: "mail"  # or "/usr/bin/mail" for full path
+  from_address: "noreply@domain.com"  # Optional: sender address for mail -r flag
 
 # Logging Configuration
 logging:
