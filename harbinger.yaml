@@ -89,7 +89,34 @@ port_kafka_tls:
   nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
   post_command: "python post_command/port_check.py {host} {port} && python post_command/tls_check.py {host} {port} && python post_command/cert_collector.py {host} {port} && python post_command/kafka.py --tls {host} {port} || echo 'TLS not available'"
 
-# Example 6: HTTP service with full response capture
+# Example 6.5: STOMP messaging with TLS detection and certificate collection
+port_stomp:
+  port: 61613
+  label: "Data Services"
+  port_label: "STOMP"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/cert_collector.py {host} {port} && python post_command/stomp.py --tls {host} {port} || python post_command/stomp.py {host} {port})"
+
+# Example 6.6: RabbitMQ Management Web API with TLS detection and certificate collection
+port_rabbitmq:
+  port: 15672
+  label: "Data Services"
+  port_label: "RabbitMQ Management"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/cert_collector.py {host} {port} && python post_command/rabbitmq-web.py --tls {host} {port} || python post_command/rabbitmq-web.py {host} {port})"
+
+# Example 6.7: Apache ActiveMQ Web Console with TLS detection and certificate collection
+port_activemq:
+  port: 8161
+  label: "Data Services"
+  port_label: "ActiveMQ Web Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/cert_collector.py {host} {port} && python post_command/activemq-web.py --tls {host} {port} || python post_command/activemq-web.py {host} {port})"
+
+# Example 7: HTTP service with full response capture
 port_http_full:
   port: 80
   label: "Web Services"

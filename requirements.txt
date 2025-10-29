@@ -11,11 +11,14 @@ schedule>=1.2.0
 confluent-kafka>=2.0.0  # For kafka.py post-command script (Kafka security testing)
 redis>=4.0.0  # For redis.py post-command script (Redis security testing)
 
-# Note: The following post-command scripts are included and use system tools:
+# Note: The following post-command scripts are included and use system tools or standard library:
 # - port_check.py (uses nmap and socket)
 # - tls_check.py (uses openssl and ssl module)
 # - http_check.py (uses socket and ssl modules)
 # - cert_collector.py (uses openssl and ssl modules)
+# - stomp.py (uses standard library: socket, ssl, argparse)
+# - rabbitmq-web.py (uses standard library: urllib, socket, ssl, argparse)
+# - activemq-web.py (uses standard library: urllib, socket, ssl, argparse)
 
 # Optional dependencies for enhanced functionality
 # (These are system-level tools, not Python packages)

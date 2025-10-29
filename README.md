@@ -309,8 +309,11 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
 1. **port_check.py** - Fast port connectivity verification
 2. **tls_check.py** - TLS/SSL capability detection  
 3. **kafka.py** - Kafka security testing with TLS support and smart error detection
-4. **http_check.py** - HTTP GET requests with full response capture
-5. **cert_collector.py** - TLS certificate collection and truststore creation
+4. **stomp.py** - STOMP messaging protocol security testing with TLS support
+5. **rabbitmq-web.py** - RabbitMQ Management Web API security testing with TLS support
+6. **activemq-web.py** - Apache ActiveMQ Web Console security testing with TLS support
+7. **http_check.py** - HTTP GET requests with full response capture
+8. **cert_collector.py** - TLS certificate collection and truststore creation
 
 **Optimization Benefits:**
 - **Speed**: Skip expensive operations when ports are closed
@@ -330,8 +333,46 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
   - "TLS connection failed - [specific error]" for SSL issues
   - "Authentication failed" for auth-related errors
 
-**Smart Chain Wrapper Script:**
+**STOMP Security Scanner Features:**
+- **TLS Support**: Use `--tls` flag for TLS-only testing
+- **No Certificate Verification**: Automatically trusts all certificates for self-signed servers
+- **Authentication Testing**: Tests if STOMP server requires authentication
+- **WebSocket Support**: Automatically detects and tests STOMP over WebSocket
+- **Intelligent Error Messages**: 
+  - "No authentication required" when connection succeeds without credentials
+  - "Authentication required" when server requires credentials
+  - "Connection refused - service not running" for connection failures
+  - "TLS connection failed - [specific error]" for SSL issues
+
+**RabbitMQ Management Web API Security Scanner Features:**
+- **TLS Support**: Use `--tls` flag for TLS-only testing (port 15671)
+- **No Certificate Verification**: Automatically trusts all certificates for self-signed servers
+- **Authentication Testing**: Tests if Management Web API requires authentication
+- **Default Credential Detection**: Tests default guest/guest credentials
+- **HTTP API Testing**: Tests RabbitMQ-specific Management HTTP API (not generic AMQP)
+- **Intelligent Error Messages**: 
+  - "No authentication required" when API is accessible without credentials
+  - "Default credentials working" when guest/guest is accepted (vulnerability)
+  - "Authentication required" when valid credentials are needed
+  - "Management plugin not enabled" when API endpoints are not found
+
+**Apache ActiveMQ Web Console Security Scanner Features:**
+- **TLS Support**: Use `--tls` flag for TLS-only testing (port 8162)
+- **No Certificate Verification**: Automatically trusts all certificates for self-signed servers
+- **Authentication Testing**: Tests if Web Console requires authentication
+- **Default Credential Detection**: Tests default admin/admin credentials
+- **HTTP Web Console Testing**: Tests ActiveMQ-specific Web Console interface
+- **Intelligent Error Messages**: 
+  - "No authentication required" when Web Console is accessible without credentials
+  - "Default credentials working" when admin/admin is accepted (vulnerability)
+  - "Authentication required" when valid credentials are needed
+  - "Web Console not found" when Web Console is not enabled or different path
+
+**Smart Chain Wrapper Scripts:**
 - **kafka.sh** (Linux/macOS): Complete chain with always-success return code
+- **stomp.sh** (Linux/macOS): Complete chain with always-success return code
+- **rabbitmq-web.sh** (Linux/macOS): Complete chain with always-success return code
+- **activemq-web.sh** (Linux/macOS): Complete chain with always-success return code
 - **Benefits**: Captures all logs while treating expected failures as success
 
 **Certificate Collection Features:**
@@ -384,6 +425,72 @@ port_kafka_smart:
   post_command: "post_command/kafka.sh {host} {port}"
 ```
 
+### Intelligent STOMP Security Scanning
+```yaml
+port_stomp:
+  port: 61613
+  label: "Data Services"
+  port_label: "STOMP"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/stomp.py --tls {host} {port} || python post_command/stomp.py {host} {port})"
+```
+
+### STOMP Smart Chain Wrapper (Recommended for Linux/macOS)
+```yaml
+port_stomp_smart:
+  port: 61613
+  label: "Data Services"
+  port_label: "STOMP Smart Chain"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/stomp.sh {host} {port}"
+```
+
+### RabbitMQ Management Web API Security Scanning
+```yaml
+port_rabbitmq:
+  port: 15672
+  label: "Data Services"
+  port_label: "RabbitMQ Management"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/rabbitmq-web.py --tls {host} {port} || python post_command/rabbitmq-web.py {host} {port})"
+```
+
+### RabbitMQ Smart Chain Wrapper (Recommended for Linux/macOS)
+```yaml
+port_rabbitmq_smart:
+  port: 15672
+  label: "Data Services"
+  port_label: "RabbitMQ Management Smart Chain"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/rabbitmq-web.sh {host} {port}"
+```
+
+### Apache ActiveMQ Web Console Security Scanning
+```yaml
+port_activemq:
+  port: 8161
+  label: "Data Services"
+  port_label: "ActiveMQ Web Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "python post_command/port_check.py {host} {port} && (python post_command/tls_check.py {host} {port} && python post_command/activemq-web.py --tls {host} {port} || python post_command/activemq-web.py {host} {port})"
+```
+
+### ActiveMQ Smart Chain Wrapper (Recommended for Linux/macOS)
+```yaml
+port_activemq_smart:
+  port: 8161
+  label: "Data Services"
+  port_label: "ActiveMQ Web Console Smart Chain"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/activemq-web.sh {host} {port}"
+```
+
 ### TLS Certificate Collection and Validation
 ```yaml
 port_https_cert:
@@ -413,7 +520,7 @@ port_https_cert:
 **Certificate File Format:**
 - **Filename**: `ca_certs/{host}-{port}.pem` (e.g., `ca_certs/10.0.0.1-443.pem`)
 - **Benefits**: No filename collisions between different ports on the same host
-- **Integration**: `kafka.py` automatically finds and uses the correct certificate file
+- **Integration**: `kafka.py`, `stomp.py`, `rabbitmq-web.py`, `activemq-web.py`, and other scripts automatically find and use the correct certificate file
 
 ### HTTP Service with Full Response Capture
 ```yaml
@@ -601,6 +708,31 @@ When reports show `[SCAN FAILED: ...]` errors:
 - **"Connection refused"**: Service is not running on the target port
 - **Truststore errors**: Run `cert_collector.py` first to collect valid certificates
 
+**STOMP Scanner Issues:**
+- **"No authentication required"**: STOMP server accepts connections without credentials (security risk)
+- **"Authentication required"**: STOMP server properly requires credentials
+- **"Connection refused"**: Service is not running on the target port
+- **"TLS connection failed"**: Check if the service requires TLS or if certificates are valid
+- **"Not a STOMP service"**: Service is running but not STOMP - this is normal for non-STOMP ports
+
+**RabbitMQ Scanner Issues:**
+- **"No authentication required"**: Management Web API accessible without credentials (security risk)
+- **"Default credentials working"**: Guest/guest credentials accepted (security vulnerability - change immediately)
+- **"Authentication required"**: Management Web API properly requires valid credentials
+- **"Management plugin not enabled"**: RabbitMQ Management plugin is not installed or enabled
+- **"Connection refused"**: Service is not running on the target port
+- **"TLS connection failed"**: Check if the service requires TLS (port 15671) or if certificates are valid
+- **"Not a RabbitMQ Management API"**: Service is running but not RabbitMQ Management Web API
+
+**ActiveMQ Scanner Issues:**
+- **"No authentication required"**: Web Console accessible without credentials (security risk)
+- **"Default credentials working"**: Admin/admin credentials accepted (security vulnerability - change immediately)
+- **"Authentication required"**: Web Console properly requires valid credentials
+- **"Web Console not found"**: ActiveMQ Web Console is not enabled or uses different path
+- **"Connection refused"**: Service is not running on the target port
+- **"TLS connection failed"**: Check if the service requires TLS (port 8162) or if certificates are valid
+- **"Not an ActiveMQ Web Console"**: Service is running but not ActiveMQ Web Console
+
 **Certificate Collection Issues:**
 - **OpenSSL errors**: Ensure OpenSSL is installed and accessible
 - **DNS resolution**: Verify hostname resolution works: `nslookup <hostname>`
@@ -691,7 +823,7 @@ ca_certs/
 
 - **No Collisions**: Same host with different ports (HTTP vs HTTPS) have separate certificate files
 - **Port-Specific Configurations**: Each port can have its own TLS configuration
-- **Automatic Integration**: `kafka.py` and other scripts automatically find the correct certificate
+- **Automatic Integration**: `kafka.py`, `stomp.py`, `rabbitmq-web.py`, `activemq-web.py`, and other scripts automatically find the correct certificate
 - **Easy Management**: Clear naming convention makes certificate files easy to identify
 
 ## Security Considerations
