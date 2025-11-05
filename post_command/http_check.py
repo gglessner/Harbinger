@@ -7,7 +7,7 @@ License: GNU GPL
 Performs HTTP GET request to specified path and outputs server response including headers.
 Returns exit code 0 for successful response, 1 for failure.
 
-Usage: python http_check.py <host> <port> [--tls] [--url <path>]
+Usage: python http_check.py <host> <port> [--tls] [--url <path>] [--vulnerable-match <string>]
 """
 
 import sys
@@ -16,10 +16,11 @@ import ssl
 import time
 import argparse
 
-def send_http_request(host, port, use_tls=False, url_path='/', timeout=10):
+def send_http_request(host, port, use_tls=False, url_path='/', timeout=10, vulnerable_match=None):
     """
     Send HTTP GET request to specified path and return response.
-    Returns tuple: (status, message) where status is 'success' or 'error'
+    Returns tuple: (status, message, is_vulnerable) where status is 'success' or 'error',
+    and is_vulnerable is True if vulnerable_match string is found in response.
     """
     try:
         # Create socket connection
@@ -66,16 +67,19 @@ def send_http_request(host, port, use_tls=False, url_path='/', timeout=10):
         # Parse and format response
         if response_data:
             response_text = response_data.decode('utf-8', errors='replace')
-            return ('success', response_text)
+            is_vulnerable = False
+            if vulnerable_match and vulnerable_match in response_text:
+                is_vulnerable = True
+            return ('success', response_text, is_vulnerable)
         else:
-            return ('error', 'No response received')
+            return ('error', 'No response received', False)
             
     except socket.timeout:
-        return ('error', 'Connection timed out')
+        return ('error', 'Connection timed out', False)
     except (ssl.SSLError, socket.error, ConnectionError, TimeoutError) as e:
-        return ('error', f'Connection failed: {str(e)}')
+        return ('error', f'Connection failed: {str(e)}', False)
     except Exception as e:
-        return ('error', f'Request failed: {str(e)}')
+        return ('error', f'Request failed: {str(e)}', False)
 
 def main():
     parser = argparse.ArgumentParser(description='HTTP GET Request Check Script')
@@ -83,6 +87,7 @@ def main():
     parser.add_argument('port', type=int, help='Port number')
     parser.add_argument('--tls', '-t', action='store_true', help='Use TLS/HTTPS')
     parser.add_argument('--url', '-u', default='/', help='URL path from root (default: /)')
+    parser.add_argument('--vulnerable-match', '-v', default=None, help='String to match in response to detect vulnerability')
     
     args = parser.parse_args()
     
@@ -90,6 +95,7 @@ def main():
     port = args.port
     use_tls = args.tls
     url_path = args.url
+    vulnerable_match = args.vulnerable_match
     
     # Validate port number
     if not (1 <= port <= 65535):
@@ -97,10 +103,14 @@ def main():
         sys.exit(1)
     
     # Perform the HTTP request
-    status, message = send_http_request(host, port, use_tls, url_path)
+    status, message, is_vulnerable = send_http_request(host, port, use_tls, url_path, vulnerable_match=vulnerable_match)
     
     # Print the result
     print(message)
+    
+    # Print vulnerability status if match string was provided
+    if is_vulnerable:
+        print("VULNERABLE")
     
     # Return appropriate exit code
     if status == 'success':

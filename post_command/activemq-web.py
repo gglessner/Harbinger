@@ -210,11 +210,14 @@ def scan_activemq_security(host, port=8161, tls_only=False):
             
             if success:
                 print(info)
+                print("VULNERABLE")
                 return
             else:
                 print(error)
                 if info:
                     print(info)
+                    if "VULNERABLE" in info:
+                        print("VULNERABLE")
                 return
         else:
             print("TLS connection failed")
@@ -228,11 +231,14 @@ def scan_activemq_security(host, port=8161, tls_only=False):
         
         if success:
             print(info)
+            print("VULNERABLE")
             return
         else:
             print(error)
             if info:
                 print(info)
+                if "VULNERABLE" in info:
+                    print("VULNERABLE")
             return
     else:
         print("Plain connection failed")

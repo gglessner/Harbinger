@@ -177,3 +177,291 @@ port_dns:
   # No email field = report-only mode
   nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
   post_command: "nslookup {host}"
+
+# Example 13: Apache ZooKeeper security scanning
+port_zookeeper:
+  port: 2181
+  label: "Data Services"
+  port_label: "ZooKeeper"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/zookeeper.sh {host} {port}"
+
+# Example 14: Apache Cassandra security scanning
+port_cassandra:
+  port: 9042
+  label: "Data Services"
+  port_label: "Cassandra"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/cassandra.sh {host} {port}"
+
+# Example 15: Apache CouchDB security scanning
+port_couchdb:
+  port: 5984
+  label: "Data Services"
+  port_label: "CouchDB"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/couchdb.sh {host} {port}"
+
+# Example 16: Apache Derby security scanning
+port_derby:
+  port: 1527
+  label: "Data Services"
+  port_label: "Derby"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/derby.sh {host} {port}"
+
+# Example 17: Apache Hadoop NameNode Web UI security scanning
+port_hadoop_namenode:
+  port: 9870
+  label: "Big Data Services"
+  port_label: "Hadoop NameNode"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/hadoop-namenode.sh {host} {port}"
+
+# Example 18: Apache Flink JobManager Web UI security scanning
+port_flink:
+  port: 8081
+  label: "Big Data Services"
+  port_label: "Flink JobManager"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/flink.sh {host} {port}"
+
+# Example 19: Apache Ignite Discovery security scanning
+port_ignite:
+  port: 47500
+  label: "Data Services"
+  port_label: "Ignite Discovery"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/ignite.sh {host} {port}"
+
+# Example 20: Apache Ignite Thin Client security scanning
+port_ignite_thin:
+  port: 10800
+  label: "Data Services"
+  port_label: "Ignite Thin Client"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/ignite-thin.sh {host} {port}"
+
+# Example 21: Apache Flume security scanning
+port_flume:
+  port: 41414
+  label: "Data Services"
+  port_label: "Flume"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/flume.sh {host} {port}"
+
+# Example 22: Apache Karaf SSH Console security scanning
+port_karaf_ssh:
+  port: 8101
+  label: "Application Servers"
+  port_label: "Karaf SSH"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/karaf-ssh.sh {host} {port}"
+
+# Example 23: Apache Karaf Web Console security scanning
+port_karaf_web:
+  port: 8181
+  label: "Application Servers"
+  port_label: "Karaf Web Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/karaf-web.sh {host} {port}"
+
+# Example 24: Apache JMeter HTTP Test Script Recorder security scanning
+port_jmeter:
+  port: 8888
+  label: "Testing Tools"
+  port_label: "JMeter HTTP Test Script Recorder"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/jmeter.sh {host} {port}"
+
+# Example 25: Memcached security scanning
+port_memcached:
+  port: 11211
+  label: "Caching Services"
+  port_label: "Memcached"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/memcached.sh {host} {port}"
+
+# Example 26: MongoDB security scanning
+port_mongodb:
+  port: 27017
+  label: "Database Services"
+  port_label: "MongoDB"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/mongodb.sh {host} {port}"
+
+# Example 27: InfluxDB security scanning
+port_influxdb:
+  port: 8086
+  label: "Time Series Databases"
+  port_label: "InfluxDB"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/influxdb.sh {host} {port}"
+
+# Example 28: Etcd security scanning
+port_etcd:
+  port: 2379
+  label: "Distributed Systems"
+  port_label: "Etcd"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/etcd.sh {host} {port}"
+
+# Example 29: Hazelcast security scanning
+port_hazelcast:
+  port: 5701
+  label: "In-Memory Data Grids"
+  port_label: "Hazelcast"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/hazelcast.sh {host} {port}"
+
+# Example 30: JBoss WildFly Management Console security scanning
+port_wildfly:
+  port: 9990
+  label: "Application Servers"
+  port_label: "WildFly Management"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/wildfly.sh {host} {port}"
+
+# Example 31: Oracle WebLogic Administration Console security scanning
+port_weblogic:
+  port: 7001
+  label: "Application Servers"
+  port_label: "WebLogic Admin Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/weblogic.sh {host} {port}"
+
+# Example 32: IBM WebSphere Administration Console security scanning
+port_websphere:
+  port: 9060
+  label: "Application Servers"
+  port_label: "WebSphere Admin Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/websphere.sh {host} {port}"
+
+# Example 33: PostgreSQL security scanning
+port_postgresql:
+  port: 5432
+  label: "Database Services"
+  port_label: "PostgreSQL"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/postgresql.sh {host} {port}"
+
+# Example 34: Microsoft SQL Server security scanning
+port_mssql:
+  port: 1433
+  label: "Database Services"
+  port_label: "Microsoft SQL Server"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/mssql.sh {host} {port}"
+
+# Example 35: NATS security scanning
+port_nats:
+  port: 4222
+  label: "Messaging Services"
+  port_label: "NATS"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/nats.sh {host} {port}"
+
+# Example 36: Mosquitto MQTT security scanning
+port_mosquitto:
+  port: 1883
+  label: "Messaging Services"
+  port_label: "Mosquitto MQTT"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/mosquitto.sh {host} {port}"
+
+# Example 37: Docker API security scanning
+port_docker_api:
+  port: 2375
+  label: "Container Services"
+  port_label: "Docker API"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/docker-api.sh {host} {port}"
+
+# Example 38: MySQL security scanning
+port_mysql:
+  port: 3306
+  label: "Database Services"
+  port_label: "MySQL"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/mysql.sh {host} {port}"
+
+# Example 39: Neo4j security scanning
+port_neo4j:
+  port: 7474
+  label: "Database Services"
+  port_label: "Neo4j"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/neo4j.sh {host} {port}"
+
+# Example 40: ClickHouse security scanning
+port_clickhouse:
+  port: 8123
+  label: "Database Services"
+  port_label: "ClickHouse"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/clickhouse.sh {host} {port}"
+
+# Example 41: LDAP security scanning
+port_ldap:
+  port: 389
+  label: "Directory Services"
+  port_label: "LDAP"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/ldap.sh {host} {port}"
+
+# Example 42: TeamCity security scanning
+port_teamcity:
+  port: 8111
+  label: "CI/CD Services"
+  port_label: "TeamCity"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/teamcity.sh {host} {port}"
+
+# Example 43: Graylog security scanning
+port_graylog:
+  port: 9000
+  label: "Logging Services"
+  port_label: "Graylog"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/graylog.sh {host} {port}"
+
+# Example 44: Confluence security scanning
+port_confluence:
+  port: 8090
+  label: "Collaboration Services"
+  port_label: "Confluence"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 10.0.0.0/24"
+  post_command: "post_command/confluence.sh {host} {port}"

@@ -212,6 +212,7 @@ def scan_redis_security(host, port=6379, tls_only=False):
                 # Security assessment
                 if not result['auth_required']:
                     print("SECURITY ISSUE: No authentication required")
+                    print("VULNERABLE")
                 else:
                     print("Authentication is required (good)")
                 
@@ -262,6 +263,7 @@ def scan_redis_security(host, port=6379, tls_only=False):
             # Security assessment
             if not result['auth_required']:
                 print("SECURITY ISSUE: No authentication required")
+                print("VULNERABLE")
             else:
                 print("Authentication is required (good)")
             

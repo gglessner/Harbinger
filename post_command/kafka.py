@@ -143,6 +143,7 @@ def scan_kafka_security(host, port=9092, tls_only=False):
             
             if consumer_success or producer_success:
                 print("TLS connection successful")
+                print("VULNERABLE")
                 return
             else:
                 # Show the most specific error message
@@ -165,6 +166,7 @@ def scan_kafka_security(host, port=9092, tls_only=False):
         
         if consumer_success or producer_success:
             print("Plain connection successful")
+            print("VULNERABLE")
             return
         else:
             # Show the most specific error message

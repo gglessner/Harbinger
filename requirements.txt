@@ -10,6 +10,10 @@ schedule>=1.2.0
 # Optional dependencies for post-command scripts
 confluent-kafka>=2.0.0  # For kafka.py post-command script (Kafka security testing)
 redis>=4.0.0  # For redis.py post-command script (Redis security testing)
+paramiko>=2.7.0  # For karaf-ssh.py post-command script (Apache Karaf SSH Console security testing)
+pymongo>=3.12.0  # For mongodb.py post-command script (MongoDB security testing - optional, script works without it)
+psycopg2-binary>=2.9.0  # For postgresql.py post-command script (PostgreSQL security testing - optional, script works without it)
+pymssql>=2.2.0  # For mssql.py post-command script (Microsoft SQL Server security testing - optional, script works without it)
 
 # Note: The following post-command scripts are included and use system tools or standard library:
 # - port_check.py (uses nmap and socket)
@@ -19,6 +23,15 @@ redis>=4.0.0  # For redis.py post-command script (Redis security testing)
 # - stomp.py (uses standard library: socket, ssl, argparse)
 # - rabbitmq-web.py (uses standard library: urllib, socket, ssl, argparse)
 # - activemq-web.py (uses standard library: urllib, socket, ssl, argparse)
+# - memcached.py (uses standard library: socket, ssl, argparse, struct)
+# - influxdb.py (uses standard library: urllib, socket, ssl, argparse)
+# - etcd.py (uses standard library: urllib, socket, ssl, argparse, json)
+# - hazelcast.py (uses standard library: socket, ssl, argparse, struct)
+# - wildfly.py, weblogic.py, websphere.py (uses standard library: urllib, socket, ssl, argparse)
+# - zookeeper.py, cassandra.py, derby.py, flume.py, ignite.py, ignite-thin.py (uses standard library: socket, ssl, argparse, struct)
+# - couchdb.py, hadoop-namenode.py, flink.py, karaf-web.py, jmeter.py (uses standard library: urllib, socket, ssl, argparse)
+# - mongodb.py, postgresql.py, mssql.py (use native protocols, optional database libraries for enhanced testing)
+# - nats.py, mosquitto.py, docker-api.py, mysql.py, neo4j.py, clickhouse.py, ldap.py, teamcity.py, graylog.py, confluence.py (uses standard library: urllib, socket, ssl, argparse, json, struct)
 
 # Optional dependencies for enhanced functionality
 # (These are system-level tools, not Python packages)

@@ -162,6 +162,8 @@ def scan_stomp_security(host, port=61613, tls_only=False):
             
             if success:
                 print(info)
+                if info and "No authentication required" in info:
+                    print("VULNERABLE")
                 return
             elif error == "WebSocket required":
                 # Try WebSocket STOMP with TLS instead
@@ -188,6 +190,8 @@ def scan_stomp_security(host, port=61613, tls_only=False):
         
         if success:
             print(info)
+            if info and "No authentication required" in info:
+                print("VULNERABLE")
             return
         elif error == "WebSocket required":
             # Try WebSocket STOMP instead

@@ -32,6 +32,10 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
   - SQLite3 (included with Python)
 - Optional Python packages for advanced features:
   - confluent-kafka (for Kafka security testing)
+  - paramiko (for Apache Karaf SSH Console security testing)
+  - pymongo (for MongoDB security testing - optional, script works without it)
+  - psycopg2-binary (for PostgreSQL security testing - optional, script works without it)
+  - pymssql (for Microsoft SQL Server security testing - optional, script works without it)
 
 ## Supported Operating Systems
 
@@ -68,6 +72,12 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
    ```bash
    # For Kafka security testing
    pip3 install confluent-kafka
+   
+   # For Apache Karaf SSH Console security testing
+   pip3 install paramiko
+   
+   # For enhanced database security testing (optional - scripts work without these)
+   pip3 install pymongo psycopg2-binary pymssql
    ```
 
 5. Make harbinger.py executable (Unix/Linux/macOS):
@@ -314,6 +324,38 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
 6. **activemq-web.py** - Apache ActiveMQ Web Console security testing with TLS support
 7. **http_check.py** - HTTP GET requests with full response capture
 8. **cert_collector.py** - TLS certificate collection and truststore creation
+9. **zookeeper.py** - Apache ZooKeeper security testing
+10. **cassandra.py** - Apache Cassandra security testing
+11. **couchdb.py** - Apache CouchDB security testing
+12. **derby.py** - Apache Derby security testing
+13. **hadoop-namenode.py** - Apache Hadoop NameNode Web UI security testing
+14. **flink.py** - Apache Flink JobManager Web UI security testing
+15. **ignite.py** - Apache Ignite Discovery security testing
+16. **ignite-thin.py** - Apache Ignite Thin Client security testing
+17. **flume.py** - Apache Flume security testing
+18. **karaf-ssh.py** - Apache Karaf SSH Console security testing
+19. **karaf-web.py** - Apache Karaf Web Console security testing
+20. **jmeter.py** - Apache JMeter HTTP Test Script Recorder security testing
+21. **memcached.py** - Memcached security testing
+22. **mongodb.py** - MongoDB security testing
+23. **influxdb.py** - InfluxDB security testing
+24. **etcd.py** - Etcd security testing
+25. **hazelcast.py** - Hazelcast security testing
+26. **wildfly.py** - JBoss WildFly Management Console security testing
+27. **weblogic.py** - Oracle WebLogic Administration Console security testing
+28. **websphere.py** - IBM WebSphere Administration Console security testing
+29. **postgresql.py** - PostgreSQL security testing
+30. **mssql.py** - Microsoft SQL Server security testing
+31. **nats.py** - NATS messaging system security testing
+32. **mosquitto.py** - Mosquitto MQTT broker security testing
+33. **docker-api.py** - Docker API security testing
+34. **mysql.py** - MySQL database security testing
+35. **neo4j.py** - Neo4j graph database security testing
+36. **clickhouse.py** - ClickHouse database security testing
+37. **ldap.py** - LDAP directory service security testing
+38. **teamcity.py** - TeamCity CI/CD security testing
+39. **graylog.py** - Graylog log management security testing
+40. **confluence.py** - Confluence collaboration platform security testing
 
 **Optimization Benefits:**
 - **Speed**: Skip expensive operations when ports are closed
@@ -373,6 +415,38 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
 - **stomp.sh** (Linux/macOS): Complete chain with always-success return code
 - **rabbitmq-web.sh** (Linux/macOS): Complete chain with always-success return code
 - **activemq-web.sh** (Linux/macOS): Complete chain with always-success return code
+- **zookeeper.sh** (Linux/macOS): Complete chain with always-success return code
+- **cassandra.sh** (Linux/macOS): Complete chain with always-success return code
+- **couchdb.sh** (Linux/macOS): Complete chain with always-success return code
+- **derby.sh** (Linux/macOS): Complete chain with always-success return code
+- **hadoop-namenode.sh** (Linux/macOS): Complete chain with always-success return code
+- **flink.sh** (Linux/macOS): Complete chain with always-success return code
+- **ignite.sh** (Linux/macOS): Complete chain with always-success return code
+- **ignite-thin.sh** (Linux/macOS): Complete chain with always-success return code
+- **flume.sh** (Linux/macOS): Complete chain with always-success return code
+- **karaf-ssh.sh** (Linux/macOS): Complete chain with always-success return code
+- **karaf-web.sh** (Linux/macOS): Complete chain with always-success return code
+- **jmeter.sh** (Linux/macOS): Complete chain with always-success return code
+- **memcached.sh** (Linux/macOS): Complete chain with always-success return code
+- **mongodb.sh** (Linux/macOS): Complete chain with always-success return code
+- **influxdb.sh** (Linux/macOS): Complete chain with always-success return code
+- **etcd.sh** (Linux/macOS): Complete chain with always-success return code
+- **hazelcast.sh** (Linux/macOS): Complete chain with always-success return code
+- **wildfly.sh** (Linux/macOS): Complete chain with always-success return code
+- **weblogic.sh** (Linux/macOS): Complete chain with always-success return code
+- **websphere.sh** (Linux/macOS): Complete chain with always-success return code
+- **postgresql.sh** (Linux/macOS): Complete chain with always-success return code
+- **mssql.sh** (Linux/macOS): Complete chain with always-success return code
+- **nats.sh** (Linux/macOS): Complete chain with always-success return code
+- **mosquitto.sh** (Linux/macOS): Complete chain with always-success return code
+- **docker-api.sh** (Linux/macOS): Complete chain with always-success return code
+- **mysql.sh** (Linux/macOS): Complete chain with always-success return code
+- **neo4j.sh** (Linux/macOS): Complete chain with always-success return code
+- **clickhouse.sh** (Linux/macOS): Complete chain with always-success return code
+- **ldap.sh** (Linux/macOS): Complete chain with always-success return code
+- **teamcity.sh** (Linux/macOS): Complete chain with always-success return code
+- **graylog.sh** (Linux/macOS): Complete chain with always-success return code
+- **confluence.sh** (Linux/macOS): Complete chain with always-success return code
 - **Benefits**: Captures all logs while treating expected failures as success
 
 **Certificate Collection Features:**
@@ -491,6 +565,358 @@ port_activemq_smart:
   post_command: "post_command/activemq-web.sh {host} {port}"
 ```
 
+### Apache ZooKeeper Security Scanning
+```yaml
+port_zookeeper:
+  port: 2181
+  label: "Data Services"
+  port_label: "ZooKeeper"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/zookeeper.sh {host} {port}"
+```
+
+### Apache Cassandra Security Scanning
+```yaml
+port_cassandra:
+  port: 9042
+  label: "Data Services"
+  port_label: "Cassandra"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/cassandra.sh {host} {port}"
+```
+
+### Apache CouchDB Security Scanning
+```yaml
+port_couchdb:
+  port: 5984
+  label: "Data Services"
+  port_label: "CouchDB"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/couchdb.sh {host} {port}"
+```
+
+### Apache Derby Security Scanning
+```yaml
+port_derby:
+  port: 1527
+  label: "Data Services"
+  port_label: "Derby"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/derby.sh {host} {port}"
+```
+
+### Apache Hadoop NameNode Web UI Security Scanning
+```yaml
+port_hadoop_namenode:
+  port: 9870
+  label: "Big Data Services"
+  port_label: "Hadoop NameNode"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/hadoop-namenode.sh {host} {port}"
+```
+
+### Apache Flink JobManager Web UI Security Scanning
+```yaml
+port_flink:
+  port: 8081
+  label: "Big Data Services"
+  port_label: "Flink JobManager"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/flink.sh {host} {port}"
+```
+
+### Apache Ignite Discovery Security Scanning
+```yaml
+port_ignite:
+  port: 47500
+  label: "Data Services"
+  port_label: "Ignite Discovery"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/ignite.sh {host} {port}"
+```
+
+### Apache Ignite Thin Client Security Scanning
+```yaml
+port_ignite_thin:
+  port: 10800
+  label: "Data Services"
+  port_label: "Ignite Thin Client"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/ignite-thin.sh {host} {port}"
+```
+
+### Apache Flume Security Scanning
+```yaml
+port_flume:
+  port: 41414
+  label: "Data Services"
+  port_label: "Flume"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/flume.sh {host} {port}"
+```
+
+### Apache Karaf SSH Console Security Scanning
+```yaml
+port_karaf_ssh:
+  port: 8101
+  label: "Application Servers"
+  port_label: "Karaf SSH"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/karaf-ssh.sh {host} {port}"
+```
+
+### Apache Karaf Web Console Security Scanning
+```yaml
+port_karaf_web:
+  port: 8181
+  label: "Application Servers"
+  port_label: "Karaf Web Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/karaf-web.sh {host} {port}"
+```
+
+### Apache JMeter HTTP Test Script Recorder Security Scanning
+```yaml
+port_jmeter:
+  port: 8888
+  label: "Testing Tools"
+  port_label: "JMeter HTTP Test Script Recorder"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/jmeter.sh {host} {port}"
+```
+
+### Memcached Security Scanning
+```yaml
+port_memcached:
+  port: 11211
+  label: "Caching Services"
+  port_label: "Memcached"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/memcached.sh {host} {port}"
+```
+
+### MongoDB Security Scanning
+```yaml
+port_mongodb:
+  port: 27017
+  label: "Database Services"
+  port_label: "MongoDB"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/mongodb.sh {host} {port}"
+```
+
+### InfluxDB Security Scanning
+```yaml
+port_influxdb:
+  port: 8086
+  label: "Time Series Databases"
+  port_label: "InfluxDB"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/influxdb.sh {host} {port}"
+```
+
+### Etcd Security Scanning
+```yaml
+port_etcd:
+  port: 2379
+  label: "Distributed Systems"
+  port_label: "Etcd"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/etcd.sh {host} {port}"
+```
+
+### Hazelcast Security Scanning
+```yaml
+port_hazelcast:
+  port: 5701
+  label: "In-Memory Data Grids"
+  port_label: "Hazelcast"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/hazelcast.sh {host} {port}"
+```
+
+### JBoss WildFly Management Console Security Scanning
+```yaml
+port_wildfly:
+  port: 9990
+  label: "Application Servers"
+  port_label: "WildFly Management"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/wildfly.sh {host} {port}"
+```
+
+### Oracle WebLogic Administration Console Security Scanning
+```yaml
+port_weblogic:
+  port: 7001
+  label: "Application Servers"
+  port_label: "WebLogic Admin Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/weblogic.sh {host} {port}"
+```
+
+### IBM WebSphere Administration Console Security Scanning
+```yaml
+port_websphere:
+  port: 9060
+  label: "Application Servers"
+  port_label: "WebSphere Admin Console"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/websphere.sh {host} {port}"
+```
+
+### PostgreSQL Security Scanning
+```yaml
+port_postgresql:
+  port: 5432
+  label: "Database Services"
+  port_label: "PostgreSQL"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/postgresql.sh {host} {port}"
+```
+
+### Microsoft SQL Server Security Scanning
+```yaml
+port_mssql:
+  port: 1433
+  label: "Database Services"
+  port_label: "Microsoft SQL Server"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/mssql.sh {host} {port}"
+```
+
+### NATS Security Scanning
+```yaml
+port_nats:
+  port: 4222
+  label: "Messaging Services"
+  port_label: "NATS"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/nats.sh {host} {port}"
+```
+
+### Mosquitto MQTT Security Scanning
+```yaml
+port_mosquitto:
+  port: 1883
+  label: "Messaging Services"
+  port_label: "Mosquitto MQTT"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/mosquitto.sh {host} {port}"
+```
+
+### Docker API Security Scanning
+```yaml
+port_docker_api:
+  port: 2375
+  label: "Container Services"
+  port_label: "Docker API"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/docker-api.sh {host} {port}"
+```
+
+### MySQL Security Scanning
+```yaml
+port_mysql:
+  port: 3306
+  label: "Database Services"
+  port_label: "MySQL"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/mysql.sh {host} {port}"
+```
+
+### Neo4j Security Scanning
+```yaml
+port_neo4j:
+  port: 7474
+  label: "Database Services"
+  port_label: "Neo4j"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/neo4j.sh {host} {port}"
+```
+
+### ClickHouse Security Scanning
+```yaml
+port_clickhouse:
+  port: 8123
+  label: "Database Services"
+  port_label: "ClickHouse"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/clickhouse.sh {host} {port}"
+```
+
+### LDAP Security Scanning
+```yaml
+port_ldap:
+  port: 389
+  label: "Directory Services"
+  port_label: "LDAP"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/ldap.sh {host} {port}"
+```
+
+### TeamCity Security Scanning
+```yaml
+port_teamcity:
+  port: 8111
+  label: "CI/CD Services"
+  port_label: "TeamCity"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/teamcity.sh {host} {port}"
+```
+
+### Graylog Security Scanning
+```yaml
+port_graylog:
+  port: 9000
+  label: "Logging Services"
+  port_label: "Graylog"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/graylog.sh {host} {port}"
+```
+
+### Confluence Security Scanning
+```yaml
+port_confluence:
+  port: 8090
+  label: "Collaboration Services"
+  port_label: "Confluence"
+  email: "security@company.com"
+  nmap_scan: "nmap -p {port} --open 192.168.1.0/24"
+  post_command: "post_command/confluence.sh {host} {port}"
+```
+
 ### TLS Certificate Collection and Validation
 ```yaml
 port_https_cert:
@@ -520,7 +946,7 @@ port_https_cert:
 **Certificate File Format:**
 - **Filename**: `ca_certs/{host}-{port}.pem` (e.g., `ca_certs/10.0.0.1-443.pem`)
 - **Benefits**: No filename collisions between different ports on the same host
-- **Integration**: `kafka.py`, `stomp.py`, `rabbitmq-web.py`, `activemq-web.py`, and other scripts automatically find and use the correct certificate file
+- **Integration**: `kafka.py`, `stomp.py`, `rabbitmq-web.py`, `activemq-web.py`, `zookeeper.py`, `cassandra.py`, `couchdb.py`, `mongodb.py`, `postgresql.py`, `mssql.py`, `nats.py`, `mosquitto.py`, `docker-api.py`, `mysql.py`, `neo4j.py`, `clickhouse.py`, `ldap.py`, `teamcity.py`, `graylog.py`, `confluence.py`, and other scripts automatically find and use the correct certificate file
 
 ### HTTP Service with Full Response Capture
 ```yaml
@@ -732,6 +1158,52 @@ When reports show `[SCAN FAILED: ...]` errors:
 - **"Connection refused"**: Service is not running on the target port
 - **"TLS connection failed"**: Check if the service requires TLS (port 8162) or if certificates are valid
 - **"Not an ActiveMQ Web Console"**: Service is running but not ActiveMQ Web Console
+
+**Apache Service Scanner Issues:**
+- **ZooKeeper/Cassandra/Derby/Flume/Ignite**: These services test protocol-level authentication
+  - **"VULNERABLE"**: Service accessible without authentication (security risk)
+  - **"Authentication required"**: Service properly requires credentials
+  - **"Connection refused"**: Service is not running on the target port
+  - **"Not a [service]"**: Service is running but not the expected Apache service
+- **CouchDB**: Tests HTTP API authentication
+  - **"VULNERABLE"**: Admin party mode enabled (no authentication required - security risk)
+  - **"Authentication required"**: Properly secured with authentication
+- **Hadoop NameNode/Flink/Karaf Web/JMeter**: Tests Web UI authentication
+  - **"VULNERABLE"**: Web UI accessible without authentication (security risk)
+  - **"Authentication required"**: Web UI properly requires credentials
+- **Karaf SSH**: Tests SSH authentication with default credentials
+  - **"VULNERABLE"**: Default credentials work (karaf/karaf, admin/admin, etc.)
+  - **"Authentication required"**: Properly secured with non-default credentials
+  - **"paramiko library not available"**: Install with `pip install paramiko`
+
+**Middleware Service Scanner Issues:**
+- **Memcached**: No built-in authentication mechanism
+  - **"VULNERABLE"**: Service accessible without authentication (Memcached has no built-in auth)
+  - **Security risk**: Exposed Memcached instances can be used for data theft or DDoS amplification
+- **MongoDB**: Tests Wire Protocol authentication
+  - **"VULNERABLE"**: Authentication disabled or default credentials work
+  - **"Authentication required"**: Properly secured with authentication
+  - **"pymongo library not available"**: Install with `pip install pymongo` for enhanced testing
+- **InfluxDB**: Tests HTTP API authentication
+  - **"VULNERABLE"**: API accessible without authentication
+  - **"Authentication required"**: Properly secured with authentication
+- **Etcd**: Tests HTTP API authentication
+  - **"VULNERABLE"**: Keys API accessible without authentication
+  - **"Authentication required"**: Properly secured with authentication
+- **Hazelcast**: Tests protocol-level authentication
+  - **"VULNERABLE"**: Service accessible without authentication
+  - **"Authentication required"**: Properly secured with authentication
+- **WildFly/WebLogic/WebSphere**: Tests Web UI authentication
+  - **"VULNERABLE"**: Management console accessible without authentication
+  - **"Authentication required"**: Properly secured with authentication
+- **PostgreSQL**: Tests Wire Protocol authentication
+  - **"VULNERABLE"**: Trust authentication enabled (no password required)
+  - **"Authentication required"**: Properly secured with password authentication
+  - **"psycopg2 library not available"**: Install with `pip install psycopg2-binary` for enhanced testing
+- **SQL Server**: Tests TDS protocol authentication
+  - **"VULNERABLE"**: Authentication disabled or weak authentication
+  - **"Authentication required"**: Properly secured with authentication
+  - **"pymssql library not available"**: Install with `pip install pymssql` for enhanced testing
 
 **Certificate Collection Issues:**
 - **OpenSSL errors**: Ensure OpenSSL is installed and accessible
