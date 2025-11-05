@@ -60,12 +60,16 @@ def test_prometheus_auth(host, port, use_ssl=False):
             response_data = response.read().decode('utf-8', errors='ignore')
             response.close()
             
+            # Print the config output
+            print(f"Prometheus accessible at {host}:{port}")
+            print(f"\n/api/v1/status/config output:")
+            print(response_data)
+            
             # Check if it's Prometheus
             if 'prometheus' in response_data.lower() or 'status' in response_data.lower():
                 # Check for authentication indicators
                 if '401' not in response_data and 'unauthorized' not in response_data.lower():
                     if 'login' not in response_data.lower() or 'password' not in response_data.lower():
-                        print(f"Prometheus accessible at {host}:{port}")
                         print("VULNERABLE")
                         return True
             
