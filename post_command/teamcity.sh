@@ -25,19 +25,19 @@ echo "=== TeamCity Security Scan Chain for $HOST:$PORT ==="
 
 echo "Step 1: Port connectivity check..."
 if python3 post_command/port_check.py "$HOST" "$PORT"; then
-    echo "✓ Port $PORT is open on $HOST"
+    echo "Port $PORT is open on $HOST"
 else
-    echo "✗ Port $PORT is closed on $HOST - stopping chain"
+    echo "Port $PORT is closed on $HOST - stopping chain"
     exit 0
 fi
 
 echo ""
 echo "Step 2: TLS capability detection..."
 if python3 post_command/tls_check.py "$HOST" "$PORT"; then
-    echo "✓ TLS detected on $HOST:$PORT"
+    echo "TLS detected on $HOST:$PORT"
     TLS_DETECTED=true
 else
-    echo "✗ No TLS detected on $HOST:$PORT"
+    echo "No TLS detected on $HOST:$PORT"
     TLS_DETECTED=false
 fi
 
@@ -45,25 +45,25 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 3: Certificate collection..."
     if python3 post_command/cert_collector.py "$HOST" "$PORT"; then
-        echo "✓ Certificates collected for $HOST:$PORT"
+        echo "Certificates collected for $HOST:$PORT"
     else
-        echo "✗ Certificate collection failed for $HOST:$PORT"
+        echo "Certificate collection failed for $HOST:$PORT"
     fi
     
     echo ""
     echo "Step 4: TeamCity TLS security testing..."
     if python3 post_command/teamcity.py --tls "$HOST" "$PORT"; then
-        echo "✓ TeamCity TLS connection successful"
+        echo "TeamCity TLS connection successful"
     else
-        echo "✗ TeamCity TLS connection failed (may not be a TeamCity service)"
+        echo "TeamCity TLS connection failed (may not be a TeamCity service)"
     fi
 else
     echo ""
     echo "Step 4: TeamCity plain connection testing..."
     if python3 post_command/teamcity.py "$HOST" "$PORT"; then
-        echo "✓ TeamCity plain connection successful"
+        echo "TeamCity plain connection successful"
     else
-        echo "✗ TeamCity plain connection failed (may not be a TeamCity service)"
+        echo "TeamCity plain connection failed (may not be a TeamCity service)"
     fi
 fi
 

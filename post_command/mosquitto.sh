@@ -25,19 +25,19 @@ echo "=== Mosquitto MQTT Security Scan Chain for $HOST:$PORT ==="
 
 echo "Step 1: Port connectivity check..."
 if python3 post_command/port_check.py "$HOST" "$PORT"; then
-    echo "✓ Port $PORT is open on $HOST"
+    echo "Port $PORT is open on $HOST"
 else
-    echo "✗ Port $PORT is closed on $HOST - stopping chain"
+    echo "Port $PORT is closed on $HOST - stopping chain"
     exit 0
 fi
 
 echo ""
 echo "Step 2: TLS capability detection..."
 if python3 post_command/tls_check.py "$HOST" "$PORT"; then
-    echo "✓ TLS detected on $HOST:$PORT"
+    echo "TLS detected on $HOST:$PORT"
     TLS_DETECTED=true
 else
-    echo "✗ No TLS detected on $HOST:$PORT"
+    echo "No TLS detected on $HOST:$PORT"
     TLS_DETECTED=false
 fi
 
@@ -45,25 +45,25 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 3: Certificate collection..."
     if python3 post_command/cert_collector.py "$HOST" "$PORT"; then
-        echo "✓ Certificates collected for $HOST:$PORT"
+        echo "Certificates collected for $HOST:$PORT"
     else
-        echo "✗ Certificate collection failed for $HOST:$PORT"
+        echo "Certificate collection failed for $HOST:$PORT"
     fi
     
     echo ""
     echo "Step 4: Mosquitto MQTT TLS security testing..."
     if python3 post_command/mosquitto.py --tls "$HOST" "$PORT"; then
-        echo "✓ Mosquitto MQTT TLS connection successful"
+        echo "Mosquitto MQTT TLS connection successful"
     else
-        echo "✗ Mosquitto MQTT TLS connection failed (may not be a Mosquitto MQTT service)"
+        echo "Mosquitto MQTT TLS connection failed (may not be a Mosquitto MQTT service)"
     fi
 else
     echo ""
     echo "Step 4: Mosquitto MQTT plain connection testing..."
     if python3 post_command/mosquitto.py "$HOST" "$PORT"; then
-        echo "✓ Mosquitto MQTT plain connection successful"
+        echo "Mosquitto MQTT plain connection successful"
     else
-        echo "✗ Mosquitto MQTT plain connection failed (may not be a Mosquitto MQTT service)"
+        echo "Mosquitto MQTT plain connection failed (may not be a Mosquitto MQTT service)"
     fi
 fi
 

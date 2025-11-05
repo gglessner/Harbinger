@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # FS NSG Series Firewalls Security Scanner Chain (HTTPS)
 # Author: Garland Glessner <gglessner@gmail.com>
 # License: GNU GPL
@@ -28,9 +28,9 @@ echo "=== FS NSG Series Firewalls Security Scan Chain for $HOST:$PORT ==="
 # Step 1: Port check
 echo "Step 1: Port connectivity check..."
 if python3 post_command/port_check.py "$HOST" "$PORT"; then
-    echo "✓ Port $PORT is open on $HOST"
+    echo "Port $PORT is open on $HOST"
 else
-    echo "✗ Port $PORT is closed on $HOST - stopping chain"
+    echo "Port $PORT is closed on $HOST - stopping chain"
     exit 0  # Return 0 - port closed is not an error
 fi
 
@@ -38,10 +38,10 @@ fi
 echo ""
 echo "Step 2: TLS capability detection..."
 if python3 post_command/tls_check.py "$HOST" "$PORT"; then
-    echo "✓ TLS detected on $HOST:$PORT"
+    echo "TLS detected on $HOST:$PORT"
     TLS_DETECTED=true
 else
-    echo "✗ No TLS detected on $HOST:$PORT"
+    echo "No TLS detected on $HOST:$PORT"
     TLS_DETECTED=false
 fi
 
@@ -50,9 +50,9 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 3: Certificate collection..."
     if python3 post_command/cert_collector.py "$HOST" "$PORT"; then
-        echo "✓ Certificates collected for $HOST:$PORT"
+        echo "Certificates collected for $HOST:$PORT"
     else
-        echo "✗ Certificate collection failed for $HOST:$PORT"
+        echo "Certificate collection failed for $HOST:$PORT"
         # Continue anyway - maybe fsnsg-https.py can still work
     fi
     
@@ -60,18 +60,18 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 4: FS NSG Series Firewalls TLS security testing..."
     if python3 post_command/fsnsg-https.py --tls "$HOST" "$PORT"; then
-        echo "✓ FS NSG Series Firewalls TLS connection successful"
+        echo "FS NSG Series Firewalls TLS connection successful"
     else
-        echo "✗ FS NSG Series Firewalls TLS connection failed (may not be an FS NSG Series Firewalls service)"
+        echo "FS NSG Series Firewalls TLS connection failed (may not be an FS NSG Series Firewalls service)"
     fi
 else
     # Step 4: FS NSG Series Firewalls plain testing
     echo ""
     echo "Step 4: FS NSG Series Firewalls plain connection testing..."
     if python3 post_command/fsnsg-https.py "$HOST" "$PORT"; then
-        echo "✓ FS NSG Series Firewalls plain connection successful"
+        echo "FS NSG Series Firewalls plain connection successful"
     else
-        echo "✗ FS NSG Series Firewalls plain connection failed (may not be an FS NSG Series Firewalls service)"
+        echo "FS NSG Series Firewalls plain connection failed (may not be an FS NSG Series Firewalls service)"
     fi
 fi
 

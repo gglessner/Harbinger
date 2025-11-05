@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # Zipkin Security Scanner Chain
 # Author: Garland Glessner <gglessner@gmail.com>
 # License: GNU GPL
@@ -28,9 +28,9 @@ echo "=== Zipkin Security Scan Chain for $HOST:$PORT ==="
 # Step 1: Port check
 echo "Step 1: Port connectivity check..."
 if python3 post_command/port_check.py "$HOST" "$PORT"; then
-    echo "✓ Port $PORT is open on $HOST"
+    echo "Port $PORT is open on $HOST"
 else
-    echo "✗ Port $PORT is closed on $HOST - stopping chain"
+    echo "Port $PORT is closed on $HOST - stopping chain"
     exit 0  # Return 0 - port closed is not an error
 fi
 
@@ -38,10 +38,10 @@ fi
 echo ""
 echo "Step 2: TLS capability detection..."
 if python3 post_command/tls_check.py "$HOST" "$PORT"; then
-    echo "✓ TLS detected on $HOST:$PORT"
+    echo "TLS detected on $HOST:$PORT"
     TLS_DETECTED=true
 else
-    echo "✗ No TLS detected on $HOST:$PORT"
+    echo "No TLS detected on $HOST:$PORT"
     TLS_DETECTED=false
 fi
 
@@ -50,9 +50,9 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 3: Certificate collection..."
     if python3 post_command/cert_collector.py "$HOST" "$PORT"; then
-        echo "✓ Certificates collected for $HOST:$PORT"
+        echo "Certificates collected for $HOST:$PORT"
     else
-        echo "✗ Certificate collection failed for $HOST:$PORT"
+        echo "Certificate collection failed for $HOST:$PORT"
         # Continue anyway - maybe zipkin.py can still work
     fi
     
@@ -60,18 +60,18 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 4: Zipkin TLS security testing..."
     if python3 post_command/zipkin.py --tls "$HOST" "$PORT"; then
-        echo "✓ Zipkin TLS connection successful"
+        echo "Zipkin TLS connection successful"
     else
-        echo "✗ Zipkin TLS connection failed (may not be a Zipkin service)"
+        echo "Zipkin TLS connection failed (may not be a Zipkin service)"
     fi
 else
     # Step 4: Zipkin plain testing
     echo ""
     echo "Step 4: Zipkin plain connection testing..."
     if python3 post_command/zipkin.py "$HOST" "$PORT"; then
-        echo "✓ Zipkin plain connection successful"
+        echo "Zipkin plain connection successful"
     else
-        echo "✗ Zipkin plain connection failed (may not be a Zipkin service)"
+        echo "Zipkin plain connection failed (may not be a Zipkin service)"
     fi
 fi
 

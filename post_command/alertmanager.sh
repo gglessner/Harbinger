@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # Prometheus Alertmanager Security Scanner Chain
 # Author: Garland Glessner <gglessner@gmail.com>
 # License: GNU GPL
@@ -28,9 +28,9 @@ echo "=== Prometheus Alertmanager Security Scan Chain for $HOST:$PORT ==="
 # Step 1: Port check
 echo "Step 1: Port connectivity check..."
 if python3 post_command/port_check.py "$HOST" "$PORT"; then
-    echo "✓ Port $PORT is open on $HOST"
+    echo "Port $PORT is open on $HOST"
 else
-    echo "✗ Port $PORT is closed on $HOST - stopping chain"
+    echo "Port $PORT is closed on $HOST - stopping chain"
     exit 0  # Return 0 - port closed is not an error
 fi
 
@@ -38,10 +38,10 @@ fi
 echo ""
 echo "Step 2: TLS capability detection..."
 if python3 post_command/tls_check.py "$HOST" "$PORT"; then
-    echo "✓ TLS detected on $HOST:$PORT"
+    echo "TLS detected on $HOST:$PORT"
     TLS_DETECTED=true
 else
-    echo "✗ No TLS detected on $HOST:$PORT"
+    echo "No TLS detected on $HOST:$PORT"
     TLS_DETECTED=false
 fi
 
@@ -50,9 +50,9 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 3: Certificate collection..."
     if python3 post_command/cert_collector.py "$HOST" "$PORT"; then
-        echo "✓ Certificates collected for $HOST:$PORT"
+        echo "Certificates collected for $HOST:$PORT"
     else
-        echo "✗ Certificate collection failed for $HOST:$PORT"
+        echo "Certificate collection failed for $HOST:$PORT"
         # Continue anyway - maybe alertmanager.py can still work
     fi
     
@@ -60,18 +60,18 @@ if [ "$TLS_DETECTED" = true ]; then
     echo ""
     echo "Step 4: Prometheus Alertmanager TLS security testing..."
     if python3 post_command/alertmanager.py --tls "$HOST" "$PORT"; then
-        echo "✓ Prometheus Alertmanager TLS connection successful"
+        echo "Prometheus Alertmanager TLS connection successful"
     else
-        echo "✗ Prometheus Alertmanager TLS connection failed (may not be an Alertmanager service)"
+        echo "Prometheus Alertmanager TLS connection failed (may not be an Alertmanager service)"
     fi
 else
     # Step 4: Prometheus Alertmanager plain testing
     echo ""
     echo "Step 4: Prometheus Alertmanager plain connection testing..."
     if python3 post_command/alertmanager.py "$HOST" "$PORT"; then
-        echo "✓ Prometheus Alertmanager plain connection successful"
+        echo "Prometheus Alertmanager plain connection successful"
     else
-        echo "✗ Prometheus Alertmanager plain connection failed (may not be an Alertmanager service)"
+        echo "Prometheus Alertmanager plain connection failed (may not be an Alertmanager service)"
     fi
 fi
 
