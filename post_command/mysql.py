@@ -6,115 +6,136 @@ License: GNU GPL
 
 This script tests MySQL connectivity and reports security configuration:
 - No authentication required (vulnerable)
+- Default/weak credentials (vulnerable)
 - Authentication required (properly secured)
+
+Requires: mysql-connector-python OR PyMySQL
+Install via:
+  - pip: pip install mysql-connector-python (or pip install PyMySQL)
+  - apt: sudo apt install python3-pymysql (Kali/Debian/Ubuntu)
+  - MySQL APT repo: sudo apt install mysql-connector-python
 """
 
 import sys
-import socket
-import ssl
 import argparse
-import struct
 
-def test_mysql_connection(host, port, use_ssl=False):
-    """Test basic MySQL connection"""
-    try:
-        if use_ssl:
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            wrapped_socket = context.wrap_socket(sock, server_hostname=host)
-            wrapped_socket.connect((host, port))
-            wrapped_socket.close()
-            return True
-        else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            sock.connect((host, port))
-            sock.close()
-            return True
-    except Exception:
-        return False
+# Try mysql-connector-python (required)
+try:
+    import mysql.connector
+    from mysql.connector import Error
+    MYSQL_AVAILABLE = True
+except ImportError:
+    MYSQL_AVAILABLE = False
+    print("Error: mysql-connector-python is required.", file=sys.stderr)
+    print("Install options for Kali Linux:", file=sys.stderr)
+    print("  1. Add MySQL APT repository (recommended if pip unavailable):", file=sys.stderr)
+    print("     wget https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb", file=sys.stderr)
+    print("     sudo dpkg -i mysql-apt-config_0.8.22-1_all.deb", file=sys.stderr)
+    print("     sudo apt-get update", file=sys.stderr)
+    print("     sudo apt-get install mysql-connector-python", file=sys.stderr)
+    print("  2. pip install mysql-connector-python (if pip is available)", file=sys.stderr)
+    print("  3. Download from: https://dev.mysql.com/downloads/connector/python/", file=sys.stderr)
+    print("     Then: python3 setup.py install", file=sys.stderr)
+    sys.exit(1)
 
 def test_mysql_auth(host, port, use_ssl=False):
-    """Test MySQL authentication"""
-    try:
-        if use_ssl:
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            conn = context.wrap_socket(sock, server_hostname=host)
-            conn.connect((host, port))
-        else:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            conn = sock
-            conn.connect((host, port))
-        
-        # Read initial handshake packet
-        handshake = conn.recv(4096)
-        
-        if len(handshake) < 4:
-            conn.close()
-            return False
-        
-        # Parse handshake to get protocol version
-        protocol_version = handshake[0]
-        
-        # Try to authenticate with empty password (common default)
-        # Build authentication packet
-        user = b'root'
-        password = b''
-        database = b''
-        
-        # MySQL authentication packet structure
-        # Packet length (3 bytes) + sequence ID (1 byte) + data
-        # For simplicity, we'll try to send a basic auth packet
-        
-        # Check if we can connect without proper auth
-        # If server sends handshake and we can respond, check if auth is required
-        
-        # Try to send a login attempt with empty password
-        # This is simplified - actual MySQL protocol is more complex
-        auth_data = struct.pack('<I', 0)  # Capability flags
-        auth_data += struct.pack('<I', 0)  # Max packet size
-        auth_data += struct.pack('B', 33)  # Character set
-        auth_data += b'\x00' * 23  # Reserved
-        auth_data += user + b'\x00'
-        auth_data += password + b'\x00'
-        
-        # If we get past the handshake without auth error, it might be vulnerable
-        # For MySQL, if we can connect and get handshake, try to see if auth is required
-        
-        conn.close()
-        
-        # If we got a handshake, MySQL is running
-        if len(handshake) > 0:
-            print(f"MySQL accessible at {host}:{port}")
-            print("Note: MySQL authentication check requires full protocol implementation")
-            print("VULNERABLE: MySQL server is accessible - verify authentication configuration")
-            print("VULNERABLE")
-            return True
-        
+    """Test MySQL authentication using mysql-connector-python"""
+    
+    # Common default credentials to test
+    test_credentials = [
+        ('root', ''),           # Empty password (very common default)
+        ('root', 'root'),       # root/root
+        ('root', 'password'),   # root/password
+        ('root', 'admin'),      # root/admin
+        ('admin', ''),          # admin with empty password
+        ('admin', 'admin'),     # admin/admin
+        ('', ''),               # Empty user/password
+    ]
+    
+    auth_required = False
+    
+    for username, password in test_credentials:
+        try:
+            connection_params = {
+                'host': host,
+                'port': port,
+                'user': username,
+                'password': password,
+                'connection_timeout': 5,
+                'autocommit': True
+            }
+            
+            if use_ssl:
+                connection_params['ssl_disabled'] = False
+                connection_params['ssl_verify_cert'] = False
+                connection_params['ssl_verify_identity'] = False
+            else:
+                connection_params['ssl_disabled'] = True
+            
+            conn = mysql.connector.connect(**connection_params)
+            
+            if conn.is_connected():
+                # Successfully connected - check if we can execute a query
+                cursor = conn.cursor()
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                # If we got here, authentication worked
+                if username == '' and password == '':
+                    print(f"MySQL accessible at {host}:{port}")
+                    print("VULNERABLE: No authentication required")
+                    print("VULNERABLE")
+                    return True
+                else:
+                    print(f"MySQL accessible at {host}:{port}")
+                    print(f"VULNERABLE: Default credentials working (user: '{username}', password: '{password}')")
+                    print("VULNERABLE")
+                    return True
+                    
+        except Error as e:
+            error_msg = str(e).lower()
+            error_code = e.errno if hasattr(e, 'errno') else None
+            
+            # MySQL error codes:
+            # 1045 = Access denied (authentication required)
+            # 2003 = Can't connect to MySQL server
+            # 2006 = MySQL server has gone away
+            # 2013 = Lost connection to MySQL server
+            
+            if error_code == 1045:
+                # Access denied - authentication is required
+                auth_required = True
+                continue  # Try next credential
+            elif error_code in (2003, 2006, 2013):
+                # Connection issues
+                print(f"Connection error - service not responding properly: {str(e)}")
+                return False
+            else:
+                # Other errors - might be connection issues
+                if 'connection' in error_msg or 'timeout' in error_msg:
+                    print(f"Connection error: {str(e)}")
+                    return False
+                continue  # Try next credential
+                
+        except Exception as e:
+            error_msg = str(e).lower()
+            if 'connection refused' in error_msg or 'connection reset' in error_msg:
+                print(f"Connection refused - service not running on {host}:{port}")
+                return False
+            elif 'timeout' in error_msg:
+                print(f"Connection timeout - service not responding")
+                return False
+            continue  # Try next credential
+    
+    # If we tried all credentials and none worked
+    if auth_required:
+        print(f"MySQL at {host}:{port} requires authentication")
         return False
-        
-    except socket.timeout:
-        print(f"Connection timeout - service not responding")
-        return False
-    except ConnectionRefusedError:
-        print(f"Connection refused - service not running on {host}:{port}")
-        return False
-    except Exception as e:
-        error_msg = str(e).lower()
-        if 'connection refused' in error_msg or 'connection reset' in error_msg:
-            print(f"Connection refused - service not running on {host}:{port}")
-        elif 'timeout' in error_msg:
-            print(f"Connection timeout - service not responding")
-        else:
-            print(f"Error testing MySQL: {str(e)}")
+    else:
+        print(f"MySQL accessible at {host}:{port}")
+        print("Could not determine authentication status")
         return False
 
 def scan_mysql_security(host, port=3306, tls_only=False):
@@ -122,16 +143,10 @@ def scan_mysql_security(host, port=3306, tls_only=False):
     
     if tls_only:
         print(f"Testing {host}:{port} - TLS only...", file=sys.stderr)
-        if test_mysql_connection(host, port, use_ssl=True):
-            test_mysql_auth(host, port, use_ssl=True)
-        else:
-            print("TLS connection failed")
+        test_mysql_auth(host, port, use_ssl=True)
     else:
         print(f"Testing {host}:{port} - Plain connection...", file=sys.stderr)
-        if test_mysql_connection(host, port, use_ssl=False):
-            test_mysql_auth(host, port, use_ssl=False)
-        else:
-            print("Plain connection failed")
+        test_mysql_auth(host, port, use_ssl=False)
 
 def main():
     parser = argparse.ArgumentParser(description='MySQL Security Scanner')
