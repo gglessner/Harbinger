@@ -36,6 +36,7 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
   - pymongo (for MongoDB security testing - optional, script works without it)
   - psycopg2-binary (for PostgreSQL security testing - optional, script works without it)
   - pymssql (for Microsoft SQL Server security testing - optional, script works without it)
+  - mysql-connector-python (for MySQL security testing - required for mysql.py)
 
 ## Supported Operating Systems
 
@@ -78,6 +79,20 @@ Harbinger is a Python3 network monitoring tool designed to detect new hosts with
    
    # For enhanced database security testing (optional - scripts work without these)
    pip3 install pymongo psycopg2-binary pymssql
+   
+   # For MySQL security testing (required for mysql.py)
+   # Option 1: Add MySQL APT repository (recommended for Kali Linux if pip unavailable)
+   wget https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb
+   sudo dpkg -i mysql-apt-config_0.8.22-1_all.deb
+   sudo apt-get update
+   sudo apt-get install mysql-connector-python
+   
+   # Option 2: Install via pip (if pip is available)
+   pip3 install mysql-connector-python
+   
+   # Option 3: Install from source (if pip/apt not available)
+   # Download from: https://dev.mysql.com/downloads/connector/python/
+   # Extract and run: python3 setup.py install
    ```
 
 5. Make harbinger.py executable (Unix/Linux/macOS):
@@ -356,6 +371,12 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
 38. **teamcity.py** - TeamCity CI/CD security testing
 39. **graylog.py** - Graylog log management security testing
 40. **confluence.py** - Confluence collaboration platform security testing
+41. **rundeck.py** - Rundeck job scheduler security testing
+42. **superset.py** - Apache Superset data visualization security testing
+43. **drill.py** - Apache Drill SQL query engine security testing
+44. **splunk.py** - Splunk log analysis security testing
+45. **artifactory.py** - Artifactory artifact repository security testing
+46. **kylin.py** - Apache Kylin OLAP engine security testing
 
 **Optimization Benefits:**
 - **Speed**: Skip expensive operations when ports are closed
@@ -447,6 +468,12 @@ Harbinger includes intelligent post-command scripts that optimize scanning perfo
 - **teamcity.sh** (Linux/macOS): Complete chain with always-success return code
 - **graylog.sh** (Linux/macOS): Complete chain with always-success return code
 - **confluence.sh** (Linux/macOS): Complete chain with always-success return code
+- **rundeck.sh** (Linux/macOS): Complete chain with always-success return code
+- **superset.sh** (Linux/macOS): Complete chain with always-success return code
+- **drill.sh** (Linux/macOS): Complete chain with always-success return code
+- **splunk.sh** (Linux/macOS): Complete chain with always-success return code
+- **artifactory.sh** (Linux/macOS): Complete chain with always-success return code
+- **kylin.sh** (Linux/macOS): Complete chain with always-success return code
 - **Benefits**: Captures all logs while treating expected failures as success
 
 **Certificate Collection Features:**
@@ -946,7 +973,7 @@ port_https_cert:
 **Certificate File Format:**
 - **Filename**: `ca_certs/{host}-{port}.pem` (e.g., `ca_certs/10.0.0.1-443.pem`)
 - **Benefits**: No filename collisions between different ports on the same host
-- **Integration**: `kafka.py`, `stomp.py`, `rabbitmq-web.py`, `activemq-web.py`, `zookeeper.py`, `cassandra.py`, `couchdb.py`, `mongodb.py`, `postgresql.py`, `mssql.py`, `nats.py`, `mosquitto.py`, `docker-api.py`, `mysql.py`, `neo4j.py`, `clickhouse.py`, `ldap.py`, `teamcity.py`, `graylog.py`, `confluence.py`, and other scripts automatically find and use the correct certificate file
+- **Integration**: `kafka.py`, `stomp.py`, `rabbitmq-web.py`, `activemq-web.py`, `zookeeper.py`, `cassandra.py`, `couchdb.py`, `mongodb.py`, `postgresql.py`, `mssql.py`, `nats.py`, `mosquitto.py`, `docker-api.py`, `mysql.py`, `neo4j.py`, `clickhouse.py`, `ldap.py`, `teamcity.py`, `graylog.py`, `confluence.py`, `rundeck.py`, `superset.py`, `drill.py`, `splunk.py`, `artifactory.py`, `kylin.py`, and other scripts automatically find and use the correct certificate file
 
 ### HTTP Service with Full Response Capture
 ```yaml
